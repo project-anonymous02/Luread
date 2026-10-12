@@ -39,11 +39,15 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6.4.0
 
       # compileSdk 37 dibutuhkan AAR navigation-compose 2.10.2 & Readium 3.4.0.
-      # Pasang eksplisit agar tidak bergantung pada isi gambar runner.
-      - name: Install Android SDK platform 37
+      # sdkmanager bawaan runner (per 2026-10-12) belum mengenal platforms;android-37
+      # sehingga platform ini diunduh otomatis oleh AGP saat konfigurasi build.
+      - name: Ensure Android SDK platform 37
         run: |
-          set -euo pipefail
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37" >/dev/null
+          set -uo pipefail
+          sdkmanager --list >/dev/null 2>&1 || true
+          if [ ! -d "$ANDROID_HOME/platforms/android-37" ]; then
+            echo "platforms;android-37 belum terpasang -> mengandalkan unduhan otomatis AGP"
+          fi
 
       # gradlew, gradlew.bat, dan gradle-wrapper.jar adalah file resmi dari
       # repository Gradle pada tag v9.6.0 (bukan file buatan sendiri).
