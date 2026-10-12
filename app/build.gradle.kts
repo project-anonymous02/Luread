@@ -7,7 +7,9 @@ plugins {
 
 android {
     namespace = "com.luread.app"
-    compileSdk = 36
+    // compileSdk 37: diminta AAR navigation-compose 2.10.2 dan Readium 3.4.0
+    // (checkDebugAarMetadata gagal pada 36 — dibuktikan CI 2026-10-12).
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.luread.app"
@@ -32,6 +34,8 @@ android {
     }
 
     compileOptions {
+        // Readium 3.4 mensyaratkan core library desugaring (AAR metadata).
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -97,6 +101,8 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 }
 
 // ---------------------------------------------------------------------------
