@@ -1,0 +1,1182 @@
+LUREAD ANDROID. MASTER ENGINEERING PROMPT
+
+MISI UTAMA
+
+Bangun aplikasi Android native bernama Luread, sebuah perpustakaan digital pribadi dan ebook reader yang sangat lengkap, gratis, tanpa akun, sangat customizable, cepat, stabil, dan memiliki kualitas desain setara aplikasi komersial yang matang.
+
+Luread menggunakan Gutendex sebagai sumber utama katalog ebook gratis dari Project Gutenberg. Aplikasi juga harus mendukung pembacaan file lokal, manajemen perpustakaan, anotasi, pencarian, bantuan bahasa, statistik membaca, personalisasi tampilan, dan fitur produktivitas membaca.
+
+Kamu bekerja sebagai senior Android engineer, software architect, UI/UX researcher, performance engineer, accessibility specialist, dan QA engineer.
+
+Tugasmu bukan sekadar membuat desain atau prototype. Tugasmu adalah membangun source code lengkap yang dapat dikompilasi menjadi APK Android melalui GitHub Actions.
+
+Target kualitas:
+
+- Sangat kaya fitur.
+- Semua fitur inti benar-benar berfungsi.
+- Tampilan premium, konsisten, dan tidak terlihat generik.
+- Animasi halus tetapi tidak mengganggu membaca.
+- Kustomisasi mendalam dan benar-benar persisten.
+- Arsitektur modular yang mudah dikembangkan.
+- Bisa digunakan tanpa login.
+- Tidak memerlukan API key berbayar.
+- Bisa membaca buku lokal tanpa internet.
+- Memiliki pengujian dan dokumentasi yang dapat diverifikasi.
+
+Jangan mengurangi fitur hanya karena jumlahnya banyak. Namun, jangan pula membuat fitur palsu hanya agar daftar fitur terlihat panjang. Implementasikan secara bertahap, pertahankan project tetap buildable, dan verifikasi setiap bagian.
+
+1. PROTOKOL RISET WAJIB SEBELUM CODING
+
+Jangan langsung menulis kode sebelum melakukan audit.
+
+Periksa kondisi direktori kerja, repository, bahasa, file yang sudah ada, konfigurasi build, dan kemungkinan implementasi sebelumnya. Jangan menimpa project yang sudah ada secara sembarangan.
+
+Lakukan riset menggunakan sumber primer:
+
+1. Gutendex API dan repository resminya.
+2. Project Gutenberg mengenai format ebook dan penggunaan koleksinya.
+3. Dokumentasi Android Developers untuk storage, text processing, lifecycle, accessibility, dan system intents.
+4. Dokumentasi resmi Jetpack Compose.
+5. Dokumentasi Readium Kotlin Toolkit.
+6. Dokumentasi resmi Gradle dan Android Gradle Plugin.
+7. Dokumentasi GitHub Actions.
+8. Referensi desain aplikasi membaca yang sudah matang.
+9. Artikel dan diskusi desain mengenai AI slop, generic AI-generated interfaces, usability, visual hierarchy, dan interaction design.
+10. Dokumentasi library lain yang benar-benar dibutuhkan.
+
+Simpan hasilnya pada:
+
+- "docs/research.md"
+- "docs/gutendex-api-audit.md"
+- "docs/ui-research.md"
+- "docs/architecture.md"
+- "docs/feature-matrix.md"
+
+Setiap dokumen harus mencantumkan sumber, tautan, tanggal pemeriksaan, dan kesimpulan yang benar-benar didukung bukti.
+
+Bedakan empat status:
+
+- Verified: sudah diverifikasi dengan sumber atau pengujian.
+- Implemented: kode fitur sudah dibuat.
+- Tested: pengujian fitur sudah dijalankan dan hasilnya dicatat.
+- Planned: belum diimplementasikan.
+
+Satu status tidak otomatis berarti status lainnya terpenuhi.
+
+Jika tidak memiliki akses internet atau suatu sumber tidak dapat diakses, laporkan keterbatasannya. Jangan mengarang isi dokumentasi atau berpura-pura telah melakukan riset.
+
+2. AUDIT GUTENDEX DAN JSON ASLI
+
+Endpoint utama:
+"https://gutendex.com/books"
+
+Repository:
+"https://github.com/garethbjohnson/gutendex"
+
+Uji endpoint secara langsung sebelum membuat data model.
+
+Contoh pengujian:
+
+- "GET /books"
+- "GET /books?search=sherlock"
+- "GET /books?languages=en"
+- "GET /books?topic=children"
+- "GET /books?ids=1342"
+- "GET /books?mime_type=text%2Fhtml"
+
+Periksa respons JSON aktual, kode HTTP, header relevan, pagination, variasi field, format file, dan kondisi error.
+
+Audit struktur katalog yang benar-benar ditemukan, termasuk:
+
+- "count"
+- "next"
+- "previous"
+- "results"
+
+Audit field buku yang tersedia, termasuk:
+
+- "id"
+- "title"
+- "authors"
+- "summaries"
+- "editors"
+- "translators"
+- "subjects"
+- "bookshelves"
+- "languages"
+- "copyright"
+- "media_type"
+- "formats"
+- "download_count"
+
+Periksa struktur objek person dan kemungkinan field kosong, null, atau array kosong.
+
+Periksa URL format buku yang nyata. Jangan menganggap setiap buku mempunyai EPUB, HTML, TXT, atau cover. Jangan membangun URL download berdasarkan ID tanpa bukti.
+
+Dokumentasikan:
+
+- Endpoint yang diuji.
+- Parameter yang digunakan.
+- Tanggal pengujian.
+- Status HTTP.
+- Struktur JSON yang teramati.
+- Variasi data.
+- Format yang benar-benar tersedia.
+- Kegagalan request.
+- Batasan yang ditemukan.
+
+Jangan mengunduh seluruh katalog secara massal. Gunakan pagination sesuai kebutuhan dan hormati layanan sumber.
+
+3. LOGO RESMI LUREAD
+
+Logo resmi akan dibuat sendiri oleh pemilik project pada lokasi:
+
+"image/logo.png"
+
+File tersebut mungkin belum tersedia saat pengerjaan dimulai.
+
+Aturan mutlak:
+
+1. Jangan membuat logo sendiri.
+2. Jangan menggunakan logo generik sebagai pengganti.
+3. Jangan mengarang isi file logo.
+4. Jangan membuat placeholder palsu dengan nama "logo.png".
+5. Periksa keberadaan file sebelum integrasi.
+6. Jika belum tersedia, lanjutkan seluruh pengembangan tanpa menghambat build.
+7. Siapkan mekanisme integrasi otomatis yang tervalidasi ketika file tersedia.
+8. Jangan memodifikasi file logo sumber secara otomatis.
+9. Catat status integrasi logo di dokumentasi.
+10. Gunakan logo konsisten hanya pada tempat yang sesuai, seperti splash screen dan halaman About.
+
+Path tersebut berada di root project. File tidak dapat digunakan langsung sebagai Android resource hanya karena file tersebut ada di root.
+
+Jika tersedia, salin melalui task Gradle atau skrip build yang aman ke:
+"app/src/main/res/drawable-nodpi/"
+
+Pastikan task memeriksa keberadaan dan validitas PNG. Jika file tidak tersedia, task harus melewatinya tanpa menggagalkan build.
+
+Jangan membuat ikon aplikasi palsu. Jika belum ada logo, gunakan konfigurasi ikon sementara yang tidak mengklaim sebagai logo resmi atau tunda integrasi ikon branding sesuai kebutuhan teknis.
+
+4. TEKNOLOGI DAN ARSITEKTUR
+
+Gunakan Kotlin sebagai bahasa utama dan Android native sebagai platform.
+
+Fondasi yang disarankan:
+
+- Kotlin.
+- Android SDK.
+- Jetpack Compose.
+- Material 3 dengan desain kustom.
+- Coroutines dan Flow.
+- MVVM.
+- Repository pattern.
+- Room.
+- DataStore.
+- Navigation Compose.
+- Ktor Client atau Retrofit.
+- Kotlin Serialization atau parser JSON yang sesuai.
+- Readium Kotlin Toolkit untuk ebook, setelah kompatibilitas versi diverifikasi.
+- WorkManager hanya untuk pekerjaan latar belakang yang benar-benar membutuhkannya.
+- Gradle Version Catalog.
+- Dependency injection jika memberikan manfaat nyata.
+
+Pilih versi dependency berdasarkan dokumentasi resmi dan kompatibilitas aktual. Catat versi yang digunakan. Jangan mencampurkan contoh API dari versi library yang berbeda.
+
+Jangan menggunakan WebView sebagai pengganti aplikasi native. Jangan membuat backend berbayar hanya untuk meneruskan request Gutendex.
+
+Arsitektur harus memisahkan:
+
+- Core.
+- Data.
+- Domain.
+- Network.
+- Database.
+- Navigation.
+- UI design system.
+- Discover.
+- Library.
+- Reader.
+- Downloads.
+- Annotations.
+- Translation.
+- Statistics.
+- Settings.
+- Accessibility.
+
+Setiap modul harus memiliki tanggung jawab yang nyata. Hindari abstraksi kosong dan pemecahan file yang tidak memberikan manfaat.
+
+5. DESAIN PREMIUM DAN ANTI AI SLOP
+
+Sebelum membuat UI, pelajari referensi desain nyata dan tuliskan analisisnya pada "docs/ui-research.md".
+
+AI slop bukan sekadar penggunaan gradient atau kartu. Evaluasi apakah desain memiliki konteks produk yang jelas, hierarki visual, interaksi yang konsisten, informasi yang berguna, dan fungsi yang benar-benar bekerja.
+
+Jangan membuat UI yang hanya terlihat menarik di screenshot.
+
+Hindari:
+
+- Gradient acak di seluruh halaman.
+- Glassmorphism berlebihan.
+- Glow dan shadow yang tidak memiliki fungsi.
+- Semua elemen berbentuk pill.
+- Semua bagian menggunakan kartu yang sama.
+- Grid generik yang diulang tanpa pertimbangan konten.
+- Emoji sebagai pengganti ikon antarmuka.
+- Statistik palsu.
+- Tombol dekoratif.
+- Placeholder permanen.
+- Teks promosi yang memenuhi layar.
+- Animasi yang memperlambat interaksi.
+- Tampilan yang hanya optimal pada satu ukuran layar.
+
+Gunakan:
+
+- Tipografi editorial yang kuat.
+- Spacing konsisten.
+- Sampul buku sebagai elemen konten utama.
+- Kontras yang terukur.
+- Ikon yang konsisten.
+- Empty state yang informatif.
+- Hierarki judul dan metadata yang jelas.
+- Komponen yang menyesuaikan fungsi dan konteks.
+- Navigasi yang dapat dipahami tanpa tutorial panjang.
+- Layout adaptif untuk ponsel dan tablet.
+- Edge-to-edge yang benar.
+- Feedback visual yang konsisten.
+
+Arah visual terinspirasi oleh konsistensi dan kehalusan aplikasi iOS, tetapi tetap mengikuti perilaku native Android. Jangan menjiplak aplikasi tertentu secara mentah.
+
+Buat design system sendiri yang mencakup color tokens, typography, spacing, radius, elevation, motion, iconography, dan component states.
+
+6. SISTEM ANIMASI
+
+Animasi harus terasa halus, responsif, dan punya tujuan.
+
+Implementasikan bila sesuai:
+
+- Transisi navigasi.
+- Shared-element style transition untuk sampul jika stabil.
+- Perubahan tab.
+- Pembukaan pencarian.
+- Ekspansi filter.
+- Perubahan layout.
+- Transisi detail buku.
+- Animasi bookmark.
+- Perubahan tema.
+- Loading placeholder.
+- Feedback download.
+- Panel reader.
+- Perubahan ukuran teks.
+- Transisi menu dan bottom sheet.
+- Feedback tombol.
+- Animasi progres membaca.
+
+Gunakan Compose Animation API dan easing yang konsisten. Jangan menggunakan animasi berat pada seluruh item list secara bersamaan.
+
+Pastikan animasi tidak mengganggu pemilihan teks, scroll, aksesibilitas, atau pembacaan. Berikan opsi mengurangi atau menonaktifkan motion. Ukur performa sebelum menambah efek visual mahal.
+
+7. NAVIGASI UTAMA
+
+Buat navigasi utama yang fungsional:
+
+1. Home.
+2. Discover.
+3. Library.
+4. Activity.
+5. Settings.
+
+Pilih bottom navigation atau struktur lain berdasarkan kebutuhan layar dan riset desain.
+
+Semua halaman harus memiliki state loading, success, empty, error, dan retry sesuai kebutuhan.
+
+Home
+
+- Continue Reading.
+- Recently Opened.
+- Popular Books berdasarkan data katalog yang tersedia.
+- Featured Categories.
+- Books by Language.
+- Books by Subject.
+- Downloaded Books.
+- Imported Books.
+- Reading Goal.
+- Reading Streak berdasarkan data aktual.
+- Reading Progress.
+- Quick Actions.
+- Recently Finished.
+- Favorites.
+- Resume Last Session.
+
+Jangan membuat rekomendasi palsu. Jika personalisasi sederhana berdasarkan riwayat lokal, jelaskan bahwa itu merupakan rekomendasi lokal, bukan AI.
+
+Discover
+
+- Search.
+- Recent Searches.
+- Search Suggestions.
+- Search by Title.
+- Search by Author.
+- Language Filters.
+- Subject Filters.
+- Bookshelf Filters jika didukung.
+- Format Availability.
+- Sorting.
+- Pagination.
+- Infinite Scrolling yang terkendali.
+- Filter Sheet.
+- Search Result Count dari API.
+- Empty Results.
+- Retry.
+- Detail Book.
+- Author Information jika data tersedia.
+- Related Books berdasarkan metadata yang relevan.
+- Copy Book Link.
+- Share Book Details.
+
+Jangan menganggap Gutendex menyediakan endpoint untuk semua fitur. Jika sebuah fungsi memerlukan data yang tidak tersedia, implementasikan melalui pemrosesan lokal atau sumber yang sudah diverifikasi.
+
+Book Details
+
+- Cover.
+- Title.
+- Author List.
+- Translator Information jika tersedia.
+- Language.
+- Subjects.
+- Bookshelves.
+- Summary.
+- Download Count.
+- Copyright Metadata jika tersedia.
+- Available Formats.
+- Read Now.
+- Download.
+- Add to Library.
+- Favorite.
+- Add to Collection.
+- Share.
+- Copy Metadata.
+- Open Source Page.
+- File Size jika benar-benar diketahui.
+- Download Status.
+- Offline Availability.
+
+Jangan menampilkan informasi yang tidak tersedia seolah-olah diketahui.
+
+8. PERPUSTAKAAN PRIBADI
+
+Implementasikan koleksi:
+
+- All Books.
+- Currently Reading.
+- Want to Read.
+- Finished.
+- Favorites.
+- Downloaded.
+- Imported.
+- Recently Opened.
+- Custom Collections.
+- Archived Books.
+
+Fitur:
+
+- Grid dan list view.
+- Search lokal.
+- Sorting.
+- Filter.
+- Multi-select.
+- Batch actions.
+- Reorder collections.
+- Rename collection.
+- Delete collection.
+- Remove book from collection.
+- Pin collection.
+- Collection cover.
+- Reading progress.
+- Last opened.
+- Duplicate detection.
+- Metadata editing untuk buku lokal.
+- Import metadata dari file jika tersedia.
+- Restore library state setelah aplikasi dibuka kembali.
+
+Jangan menghapus file fisik saat pengguna hanya menghapus metadata, kecuali pengguna secara eksplisit memilih penghapusan file.
+
+9. READER ENGINE
+
+Reader adalah fitur inti dan harus benar-benar berfungsi.
+
+Format target:
+
+- EPUB 2.
+- EPUB 3.
+- PDF.
+- TXT.
+- HTML lokal yang aman jika didukung.
+- Format tambahan hanya setelah parser dan perilakunya diuji.
+
+Gunakan Readium Kotlin Toolkit untuk format yang didukungnya. Dokumentasi Readium menyatakan dukungan EPUB dan PDF serta menyediakan fitur pembacaan, navigasi, pencarian, anotasi, dan TTS dengan perbedaan dukungan antarformat. Periksa versi aktual sebelum integrasi.
+
+Implementasikan:
+
+- Open Book.
+- Resume Reading.
+- Save Reading Position.
+- Auto Save Progress.
+- Table of Contents.
+- Page Navigation.
+- Location Navigation.
+- Search Within Book.
+- Bookmark.
+- Highlights.
+- Notes.
+- Copy Selection.
+- Share Selection.
+- System Text Actions.
+- Reading Progress.
+- Previous and Next Navigation.
+- Fullscreen Reading.
+- Reader Controls Auto Hide.
+- Scroll dan Pagination jika format mendukung.
+- Reading Position Recovery.
+- Last Read Timestamp.
+- Reading History.
+- Per-Book Settings.
+- Global Default Reader Settings.
+- Reset Reader Settings.
+- Error Recovery untuk file rusak.
+
+EPUB reflow dan PDF tidak boleh diperlakukan sama. Fitur yang hanya berlaku untuk EPUB tidak boleh ditampilkan sebagai fitur PDF jika belum didukung.
+
+10. KUSTOMISASI READER
+
+Buat pengaturan yang luas dan benar-benar memengaruhi reader.
+
+Typography:
+
+- Font Family.
+- Font Size.
+- Font Weight jika didukung.
+- Line Height.
+- Letter Spacing.
+- Paragraph Spacing.
+- Paragraph Indentation.
+- Text Alignment.
+- Text Width.
+- Horizontal Margins.
+- Vertical Margins.
+- Font Scaling.
+- Custom Fonts dari file yang diizinkan.
+
+Reading Appearance:
+
+- Light.
+- Dark.
+- Sepia.
+- Custom Background.
+- Custom Text Color.
+- Custom Accent Color.
+- Reading Themes.
+- Contrast Settings.
+- Page Shadow jika relevan.
+- Page Animation.
+- Scroll Mode.
+- Pagination Mode.
+- Reading Direction.
+- Fullscreen.
+- Hide System Bars.
+- Reader Toolbar Visibility.
+
+Behavior:
+
+- Tap Zones.
+- Swipe Navigation.
+- Scroll Sensitivity jika relevan.
+- Auto Hide Controls.
+- Screen Keep Awake.
+- Brightness Control jika didukung.
+- Orientation Preference.
+- Default Zoom untuk PDF.
+- Default Reader Mode.
+- Per-Book Overrides.
+- Restore Defaults.
+
+Semua opsi harus divalidasi, disimpan, dan dipulihkan setelah restart.
+
+Jangan menampilkan kontrol yang tidak berlaku untuk format buku yang sedang dibaca.
+
+11. FITUR BAHASA DAN PENERJEMAHAN
+
+Luread harus membantu pengguna membaca buku berbahasa asing tanpa mewajibkan layanan berbayar.
+
+Implementasikan:
+
+- Deteksi bahasa berdasarkan metadata yang tersedia.
+- Filter bahasa.
+- Label bahasa yang jelas.
+- Pemilihan teks.
+- Copy.
+- Share.
+- Search Selection.
+- System Translation Action.
+- Integrasi "ACTION_PROCESS_TEXT" jika sesuai.
+- Dictionary Integration jika sumber legal dan gratis tersedia.
+- Vocabulary Notebook.
+- Saved Words.
+- Translation History.
+- Catatan kosakata.
+- Pencarian kata di buku.
+- Text-to-Speech menggunakan Android TTS jika tersedia.
+- Pengaturan bahasa TTS.
+- Pengaturan kecepatan dan pitch jika didukung.
+- Penanganan bahasa atau voice yang belum tersedia.
+
+Periksa dokumentasi Android untuk implementasi yang benar.
+
+Jangan menganggap semua perangkat memiliki Google Translate, layanan penerjemah bawaan, atau model bahasa yang sama.
+
+Jika tidak ada penerjemah yang tersedia, berikan fallback berupa copy atau share teks. Jelaskan keterbatasannya tanpa membuat hasil terjemahan palsu.
+
+Jangan mengirim isi seluruh buku ke pihak ketiga hanya untuk menerjemahkan kata yang dipilih.
+
+12. HIGHLIGHT, NOTES, DAN ANOTASI
+
+Implementasikan:
+
+- Highlight dengan beberapa warna.
+- Catatan per highlight.
+- Bookmark.
+- Daftar anotasi.
+- Search Notes.
+- Edit Note.
+- Delete Note.
+- Navigate to Original Location.
+- Filter anotasi per buku.
+- Export Notes.
+- Export Highlights.
+- Copy Citation jika metadata mencukupi.
+- Restore Annotations.
+- Backup lokal.
+- Import backup dengan validasi.
+
+Simpan lokasi anotasi menggunakan model lokasi yang sesuai dengan reader. Jangan menyimpan posisi hanya berdasarkan nomor halaman jika format memerlukan locator yang lebih stabil.
+
+Pastikan anotasi tidak hilang saat aplikasi ditutup atau metadata diperbarui.
+
+13. DOWNLOAD MANAGER DAN OFFLINE
+
+Implementasikan:
+
+- Download EPUB jika tersedia.
+- Download format alternatif yang didukung.
+- Progress aktual.
+- Cancel.
+- Retry.
+- Error Details.
+- File Validation.
+- MIME Type Validation.
+- Partial Download Cleanup.
+- Duplicate Detection.
+- Download Queue jika benar-benar diperlukan.
+- Offline Library.
+- Storage Usage.
+- Remove Download.
+- Re-download.
+- Network Retry.
+- Open Downloaded Book.
+- Download State Persistence.
+
+Jangan menampilkan progres palsu.
+
+Jangan menganggap metadata buku berarti konten ebook tersedia. Pastikan format memiliki URL yang valid dan unduhan selesai sebelum menandai buku sebagai offline.
+
+Hormati hak cipta, lisensi, dan ketentuan sumber. Ketersediaan metadata tidak otomatis memberikan izin untuk semua penggunaan konten.
+
+14. IMPORT DAN MANAJEMEN FILE
+
+Gunakan Android Storage Access Framework untuk impor file.
+
+Fitur:
+
+- Import EPUB.
+- Import PDF.
+- Import TXT.
+- Multi-file Import.
+- Import Status.
+- File Validation.
+- Unsupported Format Detection.
+- Duplicate Detection.
+- Metadata Extraction.
+- Cover Extraction jika didukung.
+- Rename Display Title.
+- Organize Imported Files.
+- Remove from Library.
+- Delete File dengan konfirmasi.
+- File Access Recovery.
+- Invalid File Handling.
+- File Size Information jika diketahui.
+- Backup Metadata.
+
+Jangan meminta akses seluruh penyimpanan jika akses selektif melalui system picker sudah cukup.
+
+15. SISTEM STATISTIK MEMBACA
+
+Buat statistik berdasarkan data aktivitas yang benar-benar dicatat.
+
+Fitur:
+
+- Daily Reading Time.
+- Weekly Reading Time.
+- Monthly Reading Time.
+- Reading Sessions.
+- Books Started.
+- Books Finished.
+- Reading Streak.
+- Average Session Duration.
+- Progress Per Book.
+- Reading Calendar.
+- Reading Goal.
+- Reading Reminders jika diimplementasikan dengan izin dan pengaturan yang sesuai.
+- Reading History.
+- Session Details.
+- Export Statistics.
+- Reset Statistics.
+
+Jangan mengarang waktu membaca jika aplikasi tidak mencatatnya. Jelaskan bahwa waktu hanya dihitung selama sesi yang dapat diobservasi oleh aplikasi.
+
+16. FITUR PRODUKTIVITAS TAMBAHAN
+
+Tambahkan jika implementasinya masuk akal:
+
+- Reading Timer.
+- Session Notes.
+- Daily Reading Goal.
+- Weekly Goal.
+- Custom Book Tags.
+- Smart Collections berbasis aturan lokal.
+- Recently Added.
+- Recently Updated Metadata.
+- Unfinished Books.
+- Finished Books.
+- Reading Queue.
+- Reading Priority.
+- Book Rating Pribadi.
+- Personal Review.
+- Favorite Quotes.
+- Quote Collections.
+- Random Book from Library.
+- Random Page jika didukung.
+- Focus Reading Mode.
+- Screen Wake Lock Preference.
+- Quick Resume.
+- Reader Shortcut.
+- Share Book Metadata.
+- Export Personal Library.
+- Import Library Backup.
+
+Semua fitur tambahan harus memiliki fungsi yang jelas dan tidak mengorbankan stabilitas.
+
+17. PENGATURAN GLOBAL SUPER CUSTOMIZABLE
+
+Buat Settings yang luas tetapi tetap terorganisasi. Gunakan kategori dan pencarian pengaturan.
+
+Appearance:
+
+- Light, Dark, System.
+- Custom Accent.
+- Custom Background.
+- UI Density.
+- UI Text Scaling.
+- Cover Size.
+- Grid Columns.
+- List or Grid.
+- Corner Radius Presets.
+- Surface Elevation.
+- Navigation Style.
+- Edge-to-Edge.
+- Status Bar Style.
+- Navigation Bar Style.
+- Home Section Visibility.
+- Home Section Ordering.
+- Compact Metadata.
+- Cover Fit Mode.
+
+Motion:
+
+- Global Animation Toggle.
+- Reduce Motion.
+- Navigation Motion.
+- Reader Motion.
+- Loading Motion.
+- Haptic Feedback.
+- Animation Intensity.
+- Respect System Motion Preferences.
+
+Library:
+
+- Default Sort.
+- Default View.
+- Default Filters.
+- Grouping.
+- Collection Ordering.
+- Confirm Delete.
+- Duplicate Handling.
+- Auto Save Metadata.
+- Cover Cache.
+- Search History.
+
+Reader:
+
+- Default Font.
+- Default Theme.
+- Default Font Size.
+- Default Margins.
+- Default Line Height.
+- Default Navigation Mode.
+- Reader Toolbar Behavior.
+- Gesture Settings.
+- Per-Book Overrides.
+
+Network:
+
+- Request Timeout.
+- Cache Preference.
+- Retry Policy.
+- Cover Loading.
+- Download Wi-Fi Preference jika diimplementasikan.
+- Clear API Cache.
+- Clear Cover Cache.
+- Network Error Information.
+
+Data:
+
+- Export Settings.
+- Import Settings.
+- Backup Metadata.
+- Restore Backup.
+- Storage Usage.
+- Clear Search History.
+- Clear Reading History.
+- Reset Statistics.
+- Reset Settings.
+- Reset Application Data.
+
+Accessibility:
+
+- Dynamic Type.
+- TalkBack.
+- Contrast.
+- Touch Target Size.
+- Reduced Motion.
+- Screen Reader Labels.
+- Focus Navigation.
+- Non-color Status Indicators.
+
+Buat search settings yang benar-benar dapat menemukan opsi terkait. Simpan pengaturan melalui DataStore dan pastikan semuanya tetap berlaku setelah restart.
+
+Jangan membuat pengaturan yang hanya mengubah label tanpa memengaruhi fungsi.
+
+18. DATABASE DAN PERSISTENSI
+
+Gunakan Room untuk data terstruktur dan DataStore untuk preferensi.
+
+Model data harus mendukung kebutuhan aktual, termasuk:
+
+- Book Metadata.
+- Reading Progress.
+- Bookmarks.
+- Highlights.
+- Notes.
+- Collections.
+- Collection Membership.
+- Download Records.
+- Imported Files.
+- Reading Sessions.
+- Search History.
+- Vocabulary.
+- Favorite Quotes.
+- Personal Tags.
+- Settings Export Metadata.
+
+Buat migration yang benar. Jangan menghapus database ketika versi berubah.
+
+Perhatikan:
+
+- Referential Integrity.
+- Transaction.
+- Database Index.
+- Query Performance.
+- Duplicate Handling.
+- Invalid Records.
+- Backup Compatibility.
+- Data Versioning.
+
+Semua data pengguna harus tersimpan secara lokal secara default.
+
+19. PRIVASI DAN KEAMANAN
+
+- Tidak memerlukan akun.
+- Tidak meminta data pribadi yang tidak diperlukan.
+- Tidak menggunakan API key rahasia yang ditanam di APK.
+- Tidak mengirim catatan atau isi buku pribadi ke server tanpa persetujuan eksplisit.
+- Validasi URL dari API.
+- Gunakan HTTPS.
+- Batasi akses file.
+- Jangan mencetak isi buku ke log.
+- Jangan meminta permission yang tidak diperlukan.
+- Jangan membuka URL arbitrary tanpa validasi.
+- Dokumentasikan penggunaan jaringan.
+- Jangan menggunakan SDK analitik atau iklan tanpa kebutuhan dan persetujuan yang jelas.
+- Jangan menyimpan file pengguna di lokasi publik tanpa alasan.
+- Hindari dependency yang tidak dipelihara atau lisensinya tidak jelas.
+
+20. STRUKTUR FOLDER
+
+Buat project Android lengkap dengan struktur yang sesuai, minimal mencakup:
+
+"Luread/"
+
+- "settings.gradle.kts"
+- "build.gradle.kts"
+- "gradle.properties"
+- "gradlew"
+- "gradlew.bat"
+- "gradle/wrapper/"
+- "gradle/libs.versions.toml"
+- "app/build.gradle.kts"
+- "app/proguard-rules.pro"
+- "app/src/main/AndroidManifest.xml"
+- "app/src/main/java/<package-name>/"
+- "app/src/main/res/"
+- "app/src/test/"
+- "app/src/androidTest/"
+- "image/logo.png" sebagai file yang akan disediakan pemilik project nanti.
+- ".github/workflows/build.yml"
+- "docs/research.md"
+- "docs/gutendex-api-audit.md"
+- "docs/ui-research.md"
+- "docs/architecture.md"
+- "docs/feature-matrix.md"
+- "docs/testing.md"
+- "README.md"
+- ".gitignore"
+
+Jangan membuat file kosong hanya untuk memenuhi struktur.
+
+Setiap file harus memiliki tujuan nyata. Jangan mengklaim seluruh fitur selesai hanya karena semua direktori sudah dibuat.
+
+21. GITHUB ACTIONS DAN APK
+
+Gunakan lokasi workflow yang benar:
+
+".github/workflows/build.yml"
+
+Jangan menggunakan ".github/workflow/.yaml".
+
+Workflow harus mendukung:
+
+- Push.
+- Pull Request.
+- Manual Trigger melalui "workflow_dispatch".
+- JDK yang kompatibel.
+- Gradle Wrapper.
+- Dependency Cache.
+- Unit Test.
+- Build APK Debug.
+- Upload Artifact.
+- Pengumpulan log jika build gagal.
+- Permission minimum.
+
+Gunakan versi action yang valid dan kompatibel. Jangan mengarang versi action.
+
+Workflow tidak boleh bergantung pada API key rahasia atau server berbayar.
+
+Pastikan build benar-benar menjalankan Gradle dan mengambil APK dari output yang nyata. Jangan membuat file palsu atau mengganti ekstensi file lain menjadi APK.
+
+Build lokal:
+"./gradlew assembleDebug"
+
+Lokasi APK default yang diharapkan:
+"app/build/outputs/apk/debug/app-debug.apk"
+
+Periksa lokasi sebenarnya sesuai konfigurasi project.
+
+Jika ingin menambahkan APK Release, pisahkan prosesnya dan jangan mengklaim APK debug sebagai APK release bertanda tangan untuk distribusi publik.
+
+22. PENGUJIAN WAJIB
+
+Buat pengujian untuk:
+
+- Parsing JSON.
+- Null dan empty fields.
+- Pagination.
+- Search.
+- Language Filters.
+- Format Selection.
+- Repository.
+- Database.
+- Migrations.
+- Reading Progress.
+- Bookmarks.
+- Highlights.
+- Notes.
+- Settings Persistence.
+- Theme Changes.
+- Download State.
+- File Validation.
+- Import and Export.
+- Network Errors.
+- Empty Results.
+- Invalid URLs.
+- Reader Navigation.
+- Translation Fallback.
+- Session Statistics.
+
+Lakukan pemeriksaan tambahan untuk:
+
+- Layar kecil.
+- Tablet.
+- Dark Mode.
+- Font Scaling.
+- TalkBack.
+- Permission Revocation.
+- File Rusak.
+- Buku tanpa Cover.
+- Buku tanpa Summary.
+- Banyak Penulis.
+- Banyak Bahasa.
+- Jaringan Lambat.
+- Timeout.
+- API Error.
+- Proses Aplikasi Dihentikan.
+- Rotasi Perangkat.
+- Database Migration.
+- Offline Reading.
+
+Jalankan unit test, lint, dan build sesuai kemampuan lingkungan.
+
+Jangan mengklaim pengujian berhasil jika perintah tidak pernah dijalankan atau hasilnya tidak diperiksa.
+
+23. ANTI-HALUSINASI DAN AUDIT HASIL
+
+Aturan ini berlaku untuk seluruh pekerjaan.
+
+Dilarang:
+
+- Mengarang dokumentasi.
+- Mengarang hasil request.
+- Mengarang struktur JSON.
+- Mengarang endpoint.
+- Mengarang versi dependency.
+- Mengarang fitur library.
+- Mengarang statistik katalog.
+- Mengarang status build.
+- Mengarang hasil test.
+- Mengarang ketersediaan file.
+- Mengklaim fitur sudah berfungsi hanya karena kode UI ada.
+- Menyembunyikan error.
+- Mengganti implementasi gagal dengan simulasi.
+- Menggunakan data dummy permanen sebagai data API.
+- Mengklaim semua buku gratis hanya karena metadata tersedia.
+- Mengklaim semua perangkat memiliki penerjemah sistem.
+- Mengklaim semua format didukung tanpa pengujian.
+
+Jika ada hal yang tidak diketahui, nyatakan sebagai belum diketahui.
+
+Jika belum diverifikasi, tandai "Unverified".
+
+Jika belum dibuat, tandai "Planned".
+
+Jika sudah dibuat tetapi belum diuji, tandai "Implemented, Not Tested".
+
+Jika sudah diuji dan gagal, catat kegagalan dan langkah perbaikannya.
+
+Jika build gagal, jangan mengklaim aplikasi siap digunakan.
+
+Setiap klaim penting dalam laporan akhir harus bisa ditelusuri ke source code, dokumentasi, atau log pengujian.
+
+24. IMPLEMENTASI BERTAHAP
+
+Tahap 1:
+
+- Audit repository.
+- Riset Gutendex.
+- Riset UI.
+- Architecture plan.
+- Gradle setup.
+- Design system.
+- Navigation.
+- API integration.
+- Search.
+- Pagination.
+- Book details.
+
+Tahap 2:
+
+- Readium integration.
+- EPUB reader.
+- PDF reader.
+- TXT reader.
+- Import files.
+- Reading progress.
+- Bookmarks.
+
+Tahap 3:
+
+- Library.
+- Collections.
+- Notes.
+- Highlights.
+- Download manager.
+- Offline reading.
+
+Tahap 4:
+
+- Settings.
+- Custom themes.
+- Typography.
+- Animations.
+- Accessibility.
+- Language tools.
+- Translation system integration.
+- TTS.
+
+Tahap 5:
+
+- Statistics.
+- Backup and restore.
+- Performance optimization.
+- Error handling.
+- Tests.
+- UI audit.
+- GitHub Actions.
+- Documentation.
+- Final build verification.
+
+Setelah setiap tahap, pastikan project tetap buildable. Jika dependency atau implementasi tertentu gagal, selesaikan akar masalahnya sebelum membangun fitur di atasnya.
+
+25. KRITERIA SELESAI
+
+Project hanya boleh dinyatakan selesai setelah:
+
+1. Source code Android tersedia dan konsisten.
+2. Gradle Wrapper valid.
+3. Dependency berhasil diselesaikan.
+4. Gutendex memberikan data nyata.
+5. Search dan pagination berfungsi.
+6. Book details berfungsi.
+7. EPUB reader berfungsi dan diuji.
+8. Format tambahan yang diklaim didukung telah diuji.
+9. Progress, bookmark, dan settings tersimpan.
+10. Library dapat dikelola.
+11. Fitur kustomisasi yang ditampilkan benar-benar berfungsi.
+12. Integrasi penerjemahan memiliki fallback yang jujur.
+13. Tidak ada tombol inti yang sekadar dekorasi.
+14. Test yang tersedia telah dijalankan.
+15. APK debug benar-benar berhasil dibangun.
+16. Workflow GitHub Actions valid.
+17. Artifact APK benar-benar dihasilkan dan diverifikasi.
+18. Logo "image/logo.png" diintegrasikan jika sudah tersedia, tanpa menggantinya jika belum tersedia.
+19. Dokumentasi riset dan arsitektur tersedia.
+20. README menjelaskan cara build dan batasan aplikasi.
+
+26. LAPORAN AKHIR
+
+Setelah seluruh pekerjaan selesai, berikan laporan yang mencakup:
+FITUR WAJIB: ANDROID SYSTEM TRANSLATOR INTEGRATION
+
+Luread harus memiliki sistem penerjemahan yang menggunakan penerjemah nyata, bukan terjemahan dummy, hasil buatan, atau simulasi.
+
+1. Penerjemahan di dalam ebook reader
+
+Ketika pengguna memilih kata, kalimat, atau paragraf dalam EPUB, TXT, atau format lain yang mendukung seleksi teks:
+
+- Tampilkan menu konteks yang menyediakan opsi Translate.
+- Ambil teks yang benar-benar dipilih pengguna.
+- Berikan opsi untuk menerjemahkan teks melalui aplikasi penerjemah Android yang kompatibel.
+- Pertahankan posisi membaca dan jangan menghilangkan seleksi secara tidak sengaja.
+- Sediakan aksi Copy dan Share sebagai alternatif.
+- Jika memungkinkan, tampilkan hasil terjemahan dalam panel atau dialog Luread setelah hasil nyata diterima.
+- Jangan menganggap PDF mendukung seleksi teks jika implementasi PDF yang digunakan tidak menyediakannya.
+
+2. Gunakan penerjemah sistem yang benar-benar tersedia
+
+Teliti dan implementasikan integrasi Android yang sesuai, termasuk:
+
+- "Intent.ACTION_PROCESS_TEXT".
+- "Intent.EXTRA_PROCESS_TEXT".
+- "Intent.EXTRA_PROCESS_TEXT_READONLY".
+- Pemeriksaan activity yang kompatibel melalui "PackageManager".
+- Penanganan hasil dan error berdasarkan kontrak API yang sebenarnya.
+- Kompatibilitas Android dan aturan package visibility yang berlaku.
+
+Jangan mengasumsikan bahwa Android menyediakan satu API universal untuk meminta aplikasi penerjemah sistem tertentu. Jangan hardcode nama package Google Translate atau menganggap aplikasi tersebut selalu terpasang.
+
+Tampilkan aksi penerjemahan eksternal hanya ketika handler yang kompatibel benar-benar ditemukan. Jika tidak ada, berikan pesan yang jelas dan opsi Copy atau Share.
+
+3. Penerjemah di luar ebook
+
+Buat halaman khusus bernama Translator yang memungkinkan pengguna:
+
+- Mengetik atau menempelkan teks.
+- Memilih bahasa sumber jika didukung.
+- Memilih bahasa tujuan.
+- Menyalin teks sumber.
+- Membuka penerjemah eksternal yang kompatibel.
+- Membagikan teks ke aplikasi penerjemah.
+- Menangani teks kosong dan kegagalan intent dengan benar.
+- Menyalin hasil terjemahan jika hasil nyata tersedia.
+
+Jangan menampilkan hasil terjemahan jika Luread tidak benar-benar menerimanya dari layanan yang digunakan.
+
+4. Penerjemahan native di dalam Luread
+
+Riset apakah integrasi penerjemahan lokal melalui ML Kit Translation cocok sebagai opsi tambahan. Periksa dokumentasi resmi, dukungan bahasa, kebutuhan model, ukuran unduhan, dan ketentuan penggunaan.
+
+Jika dipilih:
+
+- Implementasikan penerjemahan melalui API resmi.
+- Kelola unduhan model bahasa.
+- Tampilkan status model belum diunduh, sedang diunduh, siap, dan gagal.
+- Sediakan pilihan bahasa sumber dan tujuan.
+- Jalankan pemrosesan di luar main thread.
+- Tangani error dan model yang tidak tersedia.
+- Jelaskan kebutuhan koneksi saat model belum tersedia.
+- Jangan mengklaim seluruh proses selalu offline sebelum model bahasa benar-benar tersedia secara lokal.
+- Jangan menyamakan penerjemah lokal ML Kit dengan penerjemah bawaan sistem Android.
+
+5. Audit dan pengujian
+
+Buat "docs/translation-integration.md" berisi:
+
+- API yang digunakan.
+- Dokumentasi resmi.
+- Versi Android yang diuji.
+- Aplikasi penerjemah yang ditemukan pada lingkungan pengujian.
+- Hasil pengujian ACTION_PROCESS_TEXT.
+- Hasil pengujian penerjemahan dari reader.
+- Hasil pengujian halaman Translator.
+- Status dukungan terjemahan native.
+- Fallback jika tidak ada penerjemah yang kompatibel.
+
+Uji pada perangkat atau emulator nyata yang tersedia. Jika pengujian tidak dapat dilakukan, nyatakan secara jujur bahwa fitur belum diverifikasi.
+
+Kriteria selesai: pengguna dapat memilih teks di reader dan menjalankan penerjemahan melalui handler nyata yang tersedia. Halaman Translator juga harus memiliki alur kerja nyata, bukan sekadar UI. Semua keterbatasan perangkat harus ditangani dengan fallback yang jelas.
+- Ringkasan arsitektur.
+- Struktur folder.
+- Daftar fitur yang sudah selesai.
+- Daftar fitur yang belum selesai.
+- Dependency dan versi yang digunakan.
+- Sumber API yang diverifikasi.
+- Hasil audit JSON.
+- Hasil test.
+- Hasil build.
+- Lokasi APK jika benar-benar tersedia.
+- Status integrasi logo.
+- Cara menjalankan workflow.
+- Batasan teknis.
+- Masalah yang masih terbuka.
+
+Jangan menyebut aplikasi selesai 100 persen jika kriteria belum terpenuhi. Utamakan kebenaran daripada klaim keberhasilan.
+
+MULAI SEKARANG. Periksa repository dan lingkungan kerja, lakukan riset yang bisa diverifikasi, audit JSON Gutendex, tulis rencana arsitektur, lalu lanjutkan implementasi secara bertahap sampai menghasilkan project Android native yang dapat dibangun melalui GitHub Actions.
+
+

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Warna jendela peluncuran. Palet aplikasi sendiri didefinisikan di Compose
+         (core/design/Theme.kt); file ini hanya menangani window background agar
+         tidak ada kilatan putih saat aplikasi dibuka dalam mode gelap. -->
+    <color name="launch_background_light">#FAF9F7</color>
+    <color name="launch_background_dark">#121110</color>
+</resources>

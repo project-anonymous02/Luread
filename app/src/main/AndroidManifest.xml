@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Izin jaringan: katalog Gutendex, cover, dan unduhan buku. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Dipakai opsi "keep screen awake" saat membaca. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!--
+        Diperlukan di Android 11+ agar Luread dapat memeriksa keberadaan
+        aplikasi penerjemah yang menyediakan ACTION_PROCESS_TEXT. Tanpa blok
+        ini PackageManager tidak mengembalikan activity apa pun sehingga aksi
+        penerjemahan akan selalu dianggap tidak tersedia.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+            <data android:mimeType="text/plain" />
+        </intent>
+    </queries>
+
+    <!--
+        android:icon sengaja TIDAK dideklarasikan.
+        File logo resmi (image/logo.png) belum disediakan pemilik project dan
+        dilarang membuat ikon pengganti. Dengan begitu launcher memakai ikon
+        sistem bawaan dan build tidak pernah bergantung pada aset yang belum
+        ada. Langkah menambahkan ikon setelah logo tersedia dicatat di README.
+    -->
+    <application
+        android:name=".LureadApp"
+        android:allowBackup="false"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="false"
+        android:theme="@style/Theme.Luread">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
