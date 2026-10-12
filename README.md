@@ -53,7 +53,7 @@ scripts/verify.py       pemeriksaan statis (dijalankan lokal & di CI)
 4. **PDF tidak mendukung seleksi teks** (keterbatasan `PdfRenderer` platform) → aksi terjemahan tidak ditampilkan di PDF.
 5. **Tidak ada fitur kumpulan/koleksi kustom, TTS, kosakata, atau pengaturan lanjutan** — lihat matriks fitur; semuanya tercatat sebagai Planned, bukan disembunyikan.
 6. **R8/ProGuard dinonaktifkan** pada konfigurasi release sampai konfigurasi obfuskasi untuk Readium/Ktor/serialization terverifikasi. CI hanya membangun debug.
-7. **Logo resmi** (`image/logo.png`) belum tersedia. Aplikasi sengaja tidak memakai `android:icon`; task `integrateLogo` akan menyalin file bila pemilik project meletakkannya (dengan cek magic PNG), tanpa pernah membuat/mengganti file logo.
+7. **Logo resmi** sudah tersedia di `image/logo.png` dan diintegrasikan otomatis oleh task `integrateLogo` pada setiap `preBuild`: magic byte divalidasi (PNG/JPEG — file yang terpasang saat ini sebenarnya berisi data JPEG), disalin ke `res/drawable-nodpi/logo.*`, dan dipakai sebagai ikon launcher (`@drawable/logo`). Build sengaja **gagal dengan pesan jelas** bila file hilang atau formatnya tidak dikenali — tidak pernah memakai ikon buatan.
 8. **`app/src/androidTest/` tidak dibuat** — tidak ada emulator di lingkungan ini, dan folder kosong hanya untuk memenuhi struktur dilarang.
 
 ## Privasi

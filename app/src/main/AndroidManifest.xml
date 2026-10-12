@@ -22,15 +22,15 @@
     </queries>
 
     <!--
-        android:icon sengaja TIDAK dideklarasikan.
-        File logo resmi (image/logo.png) belum disediakan pemilik project dan
-        dilarang membuat ikon pengganti. Dengan begitu launcher memakai ikon
-        sistem bawaan dan build tidak pernah bergantung pada aset yang belum
-        ada. Langkah menambahkan ikon setelah logo tersedia dicatat di README.
+        Ikon launcher memakai logo resmi (image/logo.png). Task :app:integrateLogo
+        menyalinnya ke res/drawable-nodpi/logo.* pada setiap preBuild setelah
+        magic byte divalidasi (PNG atau JPEG); build gagal dengan pesan jelas
+        bila logo hilang atau rusak, dan tidak pernah memakai ikon buatan.
     -->
     <application
         android:name=".LureadApp"
         android:allowBackup="false"
+        android:icon="@drawable/logo"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:usesCleartextTraffic="false"

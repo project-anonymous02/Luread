@@ -141,5 +141,5 @@ Penting: waktu hanya dihitung ketika sesi benar-benar diamati aplikasi (masuk re
 | Workflow CI (push/PR/manual), unit test, assembleDebug, upload artifact | I (belum pernah berjalan di GitHub Actions dari sesi ini) |
 | Unit test (parsing, format, paginasi TXT, codec lokasi, URL, pesan error) | IT→V setelah CI pertama berhasil |
 | AndroidTest / instrumentasi | **Tidak dibuat** (keputusan eksplisit: tidak ada emulator; folder sengaja tidak dibuat kosong) |
-| Logo resmi | P (menunggu `image/logo.png` dari pemilik; task `integrateLogo` siap & tidak memblokir build) |
+| Logo resmi | I | `image/logo.png` (isi JPEG 512×512) divalidasi magic byte oleh `:app:integrateLogo`, disalin ke `res/drawable-nodpi/logo.*`, dipakai sebagai `android:icon`. Build gagal bila file hilang/rusak |
 | R8/ProGuard release | Dinonaktifkan sengaja (belum terverifikasi) |

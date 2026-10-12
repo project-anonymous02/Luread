@@ -17,6 +17,8 @@ langkah pertama. Pemeriksaan yang dilakukan:
       menunjuk versi yang sama dengan libs.versions.toml.
    8. Berkas wajib proyek (README, docs, workflow, manifest) ada dan tidak
       kosong.
+   9. Logo resmi `image/logo.png` ada dan magic byte-nya PNG atau JPEG, dan
+      manifest menunjuk `@drawable/logo`.
 
 Keluar 0 bila lolos; 1 bila ada kegagalan, dengan rincian di stdout.
 """
@@ -108,8 +110,9 @@ def check_manifest() -> None:
     if application is None:
         fail("manifest tanpa <application>")
         return
-    if application.get(f"{{{ns['android']}}}icon") is not None:
-        fail("manifest memakai android:icon walau logo resmi belum tersedia")
+    ns_android = f"{{{ns['android']}}}"
+    if application.get(f"{ns_android}icon") != "@drawable/logo":
+        fail("application android:icon harus @drawable/logo (logo resmi, bukan ikon buatan)")
     name = application.get(f"{{{ns['android']}}}name")
     if name != ".LureadApp":
         fail(f"application android:name = {name}, diharapkan .LureadApp")
@@ -259,6 +262,22 @@ REQUIRED_FILES = [
 ]
 
 
+PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
+
+
+def check_logo() -> None:
+    """Logo resmi wajib ada dan berformat PNG atau JPEG (magic byte)."""
+    path = ROOT / "image" / "logo.png"
+    if not path.is_file():
+        fail("image/logo.png tidak ada — logo resmi disediakan pemilik project di lokasi ini")
+        return
+    head = path.read_bytes()[:8]
+    is_png = head[:8] == PNG_MAGIC
+    is_jpeg = head[:3] == b"\xff\xd8\xff"
+    if not (is_png or is_jpeg):
+        fail("image/logo.png bukan PNG atau JPEG yang valid (magic byte tidak dikenali)")
+
+
 def check_required_files() -> None:
     for rel in REQUIRED_FILES:
         path = ROOT / rel
@@ -334,6 +353,7 @@ def main() -> int:
     check_kotlin_sources()
     check_workflow()
     check_required_files()
+    check_logo()
     check_gradle_wrapper(toml)
 
     for w in warnings:

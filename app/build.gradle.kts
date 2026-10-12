@@ -106,43 +106,59 @@ dependencies {
 }
 
 // ---------------------------------------------------------------------------
-// Integrasi logo resmi (disediakan pemilik project di image/logo.png).
+// Integrasi logo resmi.
 //
-// Aturan yang diikuti:
-//   * Tidak pernah membuat atau mengganti file logo.
-//   * Tidak pernah menggagalkan build bila file belum tersedia.
-//   * Hanya menyalin file yang benar-benar PNG valid (cek magic byte).
-//   * Aplikasi merujuk logo saat ini lewat getIdentifier() sehingga build tetap
-//     sah baik logo ada maupun tidak (lihat core/branding/Logo.kt).
+// Logo disediakan pemilik project di image/logo.png. Ekstensi mengikuti nama
+// file yang diminta, tetapi isi file divalidasi lewat magic byte: PNG maupun
+// JPEG diterima (dan disalin dengan ekstensi yang benar, nama resource tetap
+// "logo"). Task ini:
+//   * tidak pernah membuat atau mengganti file logo,
+//   * menggagalkan build dengan pesan jelas bila file hilang atau formatnya
+//     tidak dikenali, karena AndroidManifest menunjuk @drawable/logo.
 // ---------------------------------------------------------------------------
 val integrateLogo = tasks.register("integrateLogo") {
     group = "luread"
-    description = "Salin image/logo.png ke res bila tersedia dan valid PNG; dilewati bila tidak ada."
+    description = "Validasi magic byte dan salin image/logo.png ke res/drawable-nodpi."
     doLast {
         val src = rootProject.file("image/logo.png")
         if (!src.isFile) {
-            logger.lifecycle("Luread: image/logo.png belum tersedia -> integrasi logo dilewati.")
-            return@doLast
+            throw GradleException(
+                "image/logo.png tidak ditemukan. Sediakan logo resmi (PNG atau JPEG) " +
+                    "di image/logo.png; jangan menggantinya dengan berkas buatan sendiri.",
+            )
         }
-        val magic = src.inputStream().use { input ->
+        val head = src.inputStream().use { input ->
             val bytes = ByteArray(8)
             var read = 0
-            while (read < 8) {
-                val n = input.read(bytes, read, 8 - read)
+            while (read < bytes.size) {
+                val n = input.read(bytes, read, bytes.size - read)
                 if (n < 0) break
                 read += n
             }
-            if (read < 8) ByteArray(0) else bytes
+            bytes.copyOf(read)
         }
         val pngMagic = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)
-        if (!magic.contentEquals(pngMagic)) {
-            logger.warn("Luread: image/logo.png bukan PNG valid -> tidak disalin, build dilanjutkan.")
-            return@doLast
+        val isPng = head.size >= 8 && head.copyOf(8).contentEquals(pngMagic)
+        val isJpeg = head.size >= 3 &&
+            head[0] == 0xFF.toByte() &&
+            head[1] == 0xD8.toByte() &&
+            head[2] == 0xFF.toByte()
+        val ext = when {
+            isPng -> "png"
+            isJpeg -> "jpg"
+            else -> throw GradleException(
+                "image/logo.png bukan PNG atau JPEG yang valid (magic byte tidak dikenali). " +
+                    "Perbaiki berkasnya; build dihentikan agar ikon tidak pernah palsu.",
+            )
         }
         val outDir = file("src/main/res/drawable-nodpi")
         outDir.mkdirs()
-        src.copyTo(file("src/main/res/drawable-nodpi/logo.png"), overwrite = true)
-        logger.lifecycle("Luread: logo resmi disalin ke src/main/res/drawable-nodpi/logo.png")
+        // Buang ekstensi lain agar tidak ada dua resource bernama "logo".
+        listOf("png", "jpg", "jpeg")
+            .filter { it != ext }
+            .forEach { other -> file("src/main/res/drawable-nodpi/logo.$other").delete() }
+        src.copyTo(file("src/main/res/drawable-nodpi/logo.$ext"), overwrite = true)
+        logger.lifecycle("Luread: logo resmi disalin ke res/drawable-nodpi/logo.$ext")
     }
 }
 

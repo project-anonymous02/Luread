@@ -8,10 +8,11 @@ import androidx.core.content.ContextCompat
  * Akses logo resmi tanpa referensi resource statis.
  *
  * File logo disediakan pemilik project di `image/logo.png` dan disalin oleh task
- * Gradle `:app:integrateLogo` ke `res/drawable-nodpi/logo.png` hanya bila file itu
- * benar-benar ada dan berformat PNG valid. Karena file tersebut belum tentu ada,
- * resource dirujuk lewat [Context.resources.getIdentifier] sehingga build tetap
- * sah ketika logo belum tersedia (tidak ada placeholder buatan).
+ * Gradle `:app:integrateLogo` ke `res/drawable-nodpi/logo.<png|jpg>` setelah magic
+ * byte divalidasi (PNG maupun JPEG diterima). AndroidManifest menunjuk
+ * `@drawable/logo` sebagai ikon launcher; objek ini dipakai untuk menampilkan
+ * logo di dalam aplikasi (mis. halaman About) tanpa menghardcode ID resource,
+ * sehingga kode tetap sah walau berkas logo diganti ukurannya.
  */
 object Logo {
     const val RESOURCE_NAME: String = "logo"
