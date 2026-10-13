@@ -51,6 +51,15 @@ class HomeViewModel(
     private val _indonesian = MutableStateFlow<CatalogUiState>(CatalogUiState.Loading)
     val indonesian: StateFlow<CatalogUiState> = _indonesian
 
+    private val _children = MutableStateFlow<CatalogUiState>(CatalogUiState.Loading)
+    val children: StateFlow<CatalogUiState> = _children
+
+    private val _recommendations = MutableStateFlow<CatalogUiState>(CatalogUiState.Loading)
+    val recommendations: StateFlow<CatalogUiState> = _recommendations
+
+    private val _knowledge = MutableStateFlow<CatalogUiState>(CatalogUiState.Loading)
+    val knowledge: StateFlow<CatalogUiState> = _knowledge
+
     init {
         refresh()
     }
@@ -58,12 +67,18 @@ class HomeViewModel(
     fun refresh() {
         _featured.value = CatalogUiState.Loading
         _indonesian.value = CatalogUiState.Loading
+        _children.value = CatalogUiState.Loading
+        _recommendations.value = CatalogUiState.Loading
+        _knowledge.value = CatalogUiState.Loading
         viewModelScope.launch {
+            // Featured: Gutenberg populer (browse default).
             when (val result = catalog.firstPage(CatalogQuery())) {
                 is ApiResult.Success -> _featured.value = CatalogUiState.Content(result.value)
                 is ApiResult.Failure -> _featured.value = CatalogUiState.Error(result.error.toUserMessage())
             }
-            // Section Indonesia: Open Library (language=ind, ISO 639-2).
+        }
+        viewModelScope.launch {
+            // Indonesia: Open Library language=ind.
             when (
                 val result = catalog.firstPage(
                     CatalogQuery(languages = listOf("id")),
@@ -72,6 +87,42 @@ class HomeViewModel(
             ) {
                 is ApiResult.Success -> _indonesian.value = CatalogUiState.Content(result.value)
                 is ApiResult.Failure -> _indonesian.value = CatalogUiState.Error(result.error.toUserMessage())
+            }
+        }
+        viewModelScope.launch {
+            // Anak-anak: Gutenberg topic=children.
+            when (
+                val result = catalog.firstPage(
+                    CatalogQuery(topic = "children"),
+                    source = com.luread.app.data.catalog.BookSource.GUTENDEX,
+                )
+            ) {
+                is ApiResult.Success -> _children.value = CatalogUiState.Content(result.value)
+                is ApiResult.Failure -> _children.value = CatalogUiState.Error(result.error.toUserMessage())
+            }
+        }
+        viewModelScope.launch {
+            // Rekomendasi: Open Library fiksi populer (sort editions).
+            when (
+                val result = catalog.firstPage(
+                    CatalogQuery(search = "subject:fiction"),
+                    source = com.luread.app.data.catalog.BookSource.OPEN_LIBRARY,
+                )
+            ) {
+                is ApiResult.Success -> _recommendations.value = CatalogUiState.Content(result.value)
+                is ApiResult.Failure -> _recommendations.value = CatalogUiState.Error(result.error.toUserMessage())
+            }
+        }
+        viewModelScope.launch {
+            // Pengetahuan: Open Library subject:science.
+            when (
+                val result = catalog.firstPage(
+                    CatalogQuery(search = "subject:science"),
+                    source = com.luread.app.data.catalog.BookSource.OPEN_LIBRARY,
+                )
+            ) {
+                is ApiResult.Success -> _knowledge.value = CatalogUiState.Content(result.value)
+                is ApiResult.Failure -> _knowledge.value = CatalogUiState.Error(result.error.toUserMessage())
             }
         }
     }

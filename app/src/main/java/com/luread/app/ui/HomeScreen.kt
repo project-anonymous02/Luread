@@ -46,6 +46,9 @@ fun HomeScreen(
     val stats by vm.stats.collectAsStateWithLifecycle()
     val featured by vm.featured.collectAsStateWithLifecycle()
     val indonesian by vm.indonesian.collectAsStateWithLifecycle()
+    val children by vm.children.collectAsStateWithLifecycle()
+    val recommendations by vm.recommendations.collectAsStateWithLifecycle()
+    val knowledge by vm.knowledge.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -87,69 +90,58 @@ fun HomeScreen(
         }
 
         item {
-            SectionHeader(
+            HomeBookRow(
                 title = stringResource(R.string.home_featured),
-                actionLabel = stringResource(R.string.action_see_all),
-                onAction = onOpenDiscover,
+                state = featured,
+                keyPrefix = "feat",
+                onOpenBook = onOpenBook,
+                onSeeAll = onOpenDiscover,
+                onRetry = vm::refresh,
             )
-            when (val state = featured) {
-                is CatalogUiState.Loading -> SkeletonRows(count = 3)
-                is CatalogUiState.Error -> StateMessage(
-                    title = stringResource(R.string.state_error_title),
-                    subtitle = state.message,
-                    onRetry = vm::refresh,
-                )
-                is CatalogUiState.Content -> {
-                    val cards = state.page.results.map { it.toCard() }.take(12)
-                    LazyRow(
-                        contentPadding = PaddingValues(top = Sm),
-                        horizontalArrangement = Arrangement.spacedBy(Sm),
-                    ) {
-                        items(cards, key = { "feat-${it.id}" }) { card ->
-                            BookGridItem(
-                                card = card,
-                                onClick = { onOpenBook(card.id) },
-                                modifier = Modifier.width(132.dp),
-                            )
-                        }
-                    }
-                }
-            }
         }
 
         item {
-            SectionHeader(
+            HomeBookRow(
                 title = stringResource(R.string.home_indonesian),
-                actionLabel = stringResource(R.string.action_see_all),
-                onAction = onOpenDiscover,
+                state = indonesian,
+                keyPrefix = "indo",
+                onOpenBook = onOpenBook,
+                onSeeAll = onOpenDiscover,
+                onRetry = vm::refresh,
             )
-            when (val state = indonesian) {
-                is CatalogUiState.Loading -> SkeletonRows(count = 2)
-                is CatalogUiState.Error -> StateMessage(
-                    title = stringResource(R.string.state_error_title),
-                    subtitle = state.message,
-                    onRetry = vm::refresh,
-                )
-                is CatalogUiState.Content -> {
-                    val cards = state.page.results.map { it.toCard() }.take(12)
-                    if (cards.isEmpty()) {
-                        StateMessage(title = stringResource(R.string.state_empty_title))
-                    } else {
-                        LazyRow(
-                            contentPadding = PaddingValues(top = Sm),
-                            horizontalArrangement = Arrangement.spacedBy(Sm),
-                        ) {
-                            items(cards, key = { "indo-${it.id}" }) { card ->
-                                BookGridItem(
-                                    card = card,
-                                    onClick = { onOpenBook(card.id) },
-                                    modifier = Modifier.width(132.dp),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+        }
+
+        item {
+            HomeBookRow(
+                title = stringResource(R.string.home_children),
+                state = children,
+                keyPrefix = "child",
+                onOpenBook = onOpenBook,
+                onSeeAll = onOpenDiscover,
+                onRetry = vm::refresh,
+            )
+        }
+
+        item {
+            HomeBookRow(
+                title = stringResource(R.string.home_recommendations),
+                state = recommendations,
+                keyPrefix = "reco",
+                onOpenBook = onOpenBook,
+                onSeeAll = onOpenDiscover,
+                onRetry = vm::refresh,
+            )
+        }
+
+        item {
+            HomeBookRow(
+                title = stringResource(R.string.home_knowledge),
+                state = knowledge,
+                keyPrefix = "know",
+                onOpenBook = onOpenBook,
+                onSeeAll = onOpenDiscover,
+                onRetry = vm::refresh,
+            )
         }
 
         item {
@@ -178,6 +170,50 @@ fun HomeScreen(
                     .fillMaxWidth()
                     .padding(top = Sm),
             )
+        }
+    }
+}
+
+/** Baris horizontal kartu buku yang dipakai beberapa section Home. */
+@Composable
+private fun HomeBookRow(
+    title: String,
+    state: CatalogUiState,
+    keyPrefix: String,
+    onOpenBook: (String) -> Unit,
+    onSeeAll: () -> Unit,
+    onRetry: () -> Unit,
+) {
+    SectionHeader(
+        title = title,
+        actionLabel = stringResource(R.string.action_see_all),
+        onAction = onSeeAll,
+    )
+    when (state) {
+        is CatalogUiState.Loading -> SkeletonRows(count = 2)
+        is CatalogUiState.Error -> StateMessage(
+            title = stringResource(R.string.state_error_title),
+            subtitle = state.message,
+            onRetry = onRetry,
+        )
+        is CatalogUiState.Content -> {
+            val cards = state.page.results.map { it.toCard() }.take(12)
+            if (cards.isEmpty()) {
+                StateMessage(title = stringResource(R.string.state_empty_title))
+            } else {
+                LazyRow(
+                    contentPadding = PaddingValues(top = Sm),
+                    horizontalArrangement = Arrangement.spacedBy(Sm),
+                ) {
+                    items(cards, key = { "$keyPrefix-${it.id}" }) { card ->
+                        BookGridItem(
+                            card = card,
+                            onClick = { onOpenBook(card.id) },
+                            modifier = Modifier.width(132.dp),
+                        )
+                    }
+                }
+            }
         }
     }
 }
