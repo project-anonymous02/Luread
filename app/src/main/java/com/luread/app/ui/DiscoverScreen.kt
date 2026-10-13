@@ -254,6 +254,9 @@ private val topicOptions = listOf(
     ChipOption("psychology", R.string.filter_topic_psychology),
     ChipOption("business", R.string.filter_topic_business),
     ChipOption("politics", R.string.filter_topic_politics),
+    ChipOption("comic books", R.string.filter_topic_comics),
+    ChipOption("comics", R.string.filter_topic_comics_plural),
+    ChipOption("graphic novels", R.string.filter_topic_graphic),
 )
 
 private val formatOptions = listOf(

@@ -121,6 +121,9 @@
     <string name="filter_topic_psychology">Psychology</string>
     <string name="filter_topic_business">Business</string>
     <string name="filter_topic_politics">Politics</string>
+    <string name="filter_topic_comics">Comic books</string>
+    <string name="filter_topic_comics_plural">Comics</string>
+    <string name="filter_topic_graphic">Graphic novels</string>
     <string name="filter_format_epub">EPUB</string>
     <string name="filter_format_html">HTML</string>
     <string name="filter_format_pdf">PDF</string>
@@ -169,6 +172,7 @@
     <string name="home_recommendations">Cerita rekomendasi</string>
     <string name="home_knowledge">Buku Pengetahuan</string>
     <string name="home_manga">Manga (MangaDex)</string>
+    <string name="home_comics">Komik &amp; Comic Books (Internet Archive)</string>
     <string name="home_recent">Recently added</string>
     <string name="home_empty_subtitle">Add books from Discover, or import your own EPUB/PDF/TXT files.</string>
     <string name="home_stat_library">%1$d in your library</string>

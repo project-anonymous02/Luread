@@ -66,6 +66,9 @@ class HomeViewModel(
     private val _manga = MutableStateFlow<MangaListUi>(MangaListUi.Loading)
     val manga: StateFlow<MangaListUi> = _manga
 
+    private val _comics = MutableStateFlow<CatalogUiState>(CatalogUiState.Loading)
+    val comics: StateFlow<CatalogUiState> = _comics
+
     init {
         refresh()
     }
@@ -77,6 +80,7 @@ class HomeViewModel(
         _recommendations.value = CatalogUiState.Loading
         _knowledge.value = CatalogUiState.Loading
         _manga.value = MangaListUi.Loading
+        _comics.value = CatalogUiState.Loading
         viewModelScope.launch {
             // Featured: Gutenberg populer (browse default).
             when (val result = catalog.firstPage(CatalogQuery())) {
@@ -137,6 +141,18 @@ class HomeViewModel(
             when (val result = manga.popular()) {
                 is ApiResult.Success -> _manga.value = MangaListUi.Content(result.value.results)
                 is ApiResult.Failure -> _manga.value = MangaListUi.Error(result.error.toUserMessage())
+            }
+        }
+        viewModelScope.launch {
+            // Komik & comic books (Internet Archive, PDF/CBZ yang bisa diunduh).
+            when (
+                val result = catalog.firstPage(
+                    CatalogQuery(search = "subject:comic books"),
+                    source = com.luread.app.data.catalog.BookSource.INTERNET_ARCHIVE,
+                )
+            ) {
+                is ApiResult.Success -> _comics.value = CatalogUiState.Content(result.value)
+                is ApiResult.Failure -> _comics.value = CatalogUiState.Error(result.error.toUserMessage())
             }
         }
     }

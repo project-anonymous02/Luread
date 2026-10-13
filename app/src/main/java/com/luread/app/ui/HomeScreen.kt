@@ -53,6 +53,7 @@ fun HomeScreen(
     val recommendations by vm.recommendations.collectAsStateWithLifecycle()
     val knowledge by vm.knowledge.collectAsStateWithLifecycle()
     val mangaState by vm.manga.collectAsStateWithLifecycle()
+    val comics by vm.comics.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -153,6 +154,17 @@ fun HomeScreen(
                 state = mangaState,
                 onOpenManga = onOpenManga,
                 onSeeAll = onOpenMangaList,
+                onRetry = vm::refresh,
+            )
+        }
+
+        item {
+            HomeBookRow(
+                title = stringResource(R.string.home_comics),
+                state = comics,
+                keyPrefix = "comic",
+                onOpenBook = onOpenBook,
+                onSeeAll = onOpenDiscover,
                 onRetry = vm::refresh,
             )
         }

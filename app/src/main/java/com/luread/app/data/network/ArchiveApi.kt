@@ -35,13 +35,21 @@ class ArchiveApi(
         /** Browse ketika pencarian kosong (diverifikasi memberi hasil buku). */
         const val DEFAULT_TAIL = " AND subject:fiction"
 
-        fun searchUrl(search: String?, languages: List<String>, page: Int): String {
+        fun searchUrl(
+            search: String?,
+            languages: List<String>,
+            page: Int,
+            topic: String? = null,
+        ): String {
             val text = search?.trim()
             val query = buildString {
                 append(BASE_QUERY)
                 CatalogLanguages.isoFor(languages)?.let { append(" AND language:").append(it) }
+                topic?.trim()?.takeIf { it.isNotEmpty() }?.let {
+                    append(" AND subject:").append(escapePhrase(it))
+                }
                 if (text.isNullOrEmpty()) {
-                    append(DEFAULT_TAIL)
+                    if (topic.isNullOrBlank()) append(DEFAULT_TAIL)
                 } else {
                     append(" AND title:(").append(escapePhrase(text)).append(")")
                 }
@@ -52,7 +60,7 @@ class ArchiveApi(
             builder.parameters.append("page", page.coerceAtLeast(1).toString())
             builder.parameters.append("output", "json")
             SEARCH_FIELDS.forEach { builder.parameters.append("fl[]", it) }
-            if (text.isNullOrEmpty()) {
+            if (text.isNullOrEmpty() && topic.isNullOrBlank()) {
                 builder.parameters.append("sort[]", "downloads desc")
             }
             return builder.buildString()
@@ -65,8 +73,13 @@ class ArchiveApi(
             "\"" + text.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
     }
 
-    suspend fun search(search: String?, languages: List<String>, page: Int): ApiResult<ArchiveSearchResponse> =
-        fetchJson(client, searchUrl(search, languages, page)) {
+    suspend fun search(
+        search: String?,
+        languages: List<String>,
+        page: Int,
+        topic: String? = null,
+    ): ApiResult<ArchiveSearchResponse> =
+        fetchJson(client, searchUrl(search, languages, page, topic)) {
             json.decodeFromString(ArchiveSearchResponse.serializer(), it)
         }
 

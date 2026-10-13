@@ -90,7 +90,9 @@ class CatalogRepository(
             )
         }
 
-        BookSource.INTERNET_ARCHIVE -> when (val r = archive.search(query.search, query.languages, 1)) {
+        BookSource.INTERNET_ARCHIVE -> when (
+            val r = archive.search(query.search, query.languages, 1, query.topic)
+        ) {
             is ApiResult.Failure -> r
             is ApiResult.Success -> {
                 val body = r.value.response
@@ -133,7 +135,7 @@ class CatalogRepository(
 
             BookSource.INTERNET_ARCHIVE -> {
                 val page = cursor.removePrefix("page=").toIntOrNull() ?: 1
-                when (val r = archive.search(query.search, query.languages, page)) {
+                when (val r = archive.search(query.search, query.languages, page, query.topic)) {
                     is ApiResult.Failure -> r
                     is ApiResult.Success -> {
                         val body = r.value.response
