@@ -45,9 +45,16 @@ object ArchiveFormats {
             f.format.equals("MOBI", ignoreCase = true) ||
             f.format.equals("Mobipocket", ignoreCase = true)
         }
+        val azw3 = files.firstOrNull { f ->
+            f.name.endsWith(".azw3", ignoreCase = true) ||
+            f.name.endsWith(".azw", ignoreCase = true) ||
+            f.format.equals("Kindle for PD", ignoreCase = true) ||
+            f.format.equals("Amazon Kindle", ignoreCase = true)
+        }
         val fb2 = files.firstOrNull { f ->
             f.name.endsWith(".fb2", ignoreCase = true) ||
-            f.format.equals("FictionBook 2", ignoreCase = true)
+            f.format.equals("FictionBook 2", ignoreCase = true) ||
+            f.format.equals("FictionBook2", ignoreCase = true)
         }
         val djvu = files.firstOrNull { f ->
             f.name.endsWith(".djvu", ignoreCase = true) ||
@@ -56,6 +63,10 @@ object ArchiveFormats {
         val cbz = files.firstOrNull { f ->
             f.name.endsWith(".cbz", ignoreCase = true) ||
             f.format.equals("Comic Book ZIP", ignoreCase = true)
+        }
+        val cbr = files.firstOrNull { f ->
+            f.name.endsWith(".cbr", ignoreCase = true) ||
+            f.format.equals("Comic Book RAR", ignoreCase = true)
         }
         val rtf = files.firstOrNull { f ->
             f.name.endsWith(".rtf", ignoreCase = true) ||
@@ -73,6 +84,10 @@ object ArchiveFormats {
             f.name.endsWith(".txt", ignoreCase = true) && !f.name.endsWith("_djvu.txt", ignoreCase = true) &&
             f.format?.contains("Text", ignoreCase = true) == true
         }
+        val md = files.firstOrNull { f ->
+            f.name.endsWith(".md", ignoreCase = true) ||
+            f.name.endsWith(".markdown", ignoreCase = true)
+        }
 
         val picked = LinkedHashMap<String, String>()
         epub?.let { picked[Formats.MIME_EPUB] = downloadUrl(identifier, it.name) }
@@ -81,11 +96,14 @@ object ArchiveFormats {
         textUtf8?.let { picked.putIfAbsent(Formats.MIME_TEXT, downloadUrl(identifier, it.name)) }
         html?.let { picked[Formats.MIME_HTML] = downloadUrl(identifier, it.name) }
         mobi?.let { picked[Formats.MIME_MOBI] = downloadUrl(identifier, it.name) }
+        azw3?.let { picked[Formats.MIME_MOBI] = downloadUrl(identifier, it.name) }
         fb2?.let { picked[Formats.MIME_FB2] = downloadUrl(identifier, it.name) }
         djvu?.let { picked[Formats.MIME_DJVU] = downloadUrl(identifier, it.name) }
         cbz?.let { picked[Formats.MIME_CBZ] = downloadUrl(identifier, it.name) }
+        cbr?.let { picked[Formats.MIME_CBZ] = downloadUrl(identifier, it.name) }
         rtf?.let { picked[Formats.MIME_RTF] = downloadUrl(identifier, it.name) }
         docx?.let { picked[Formats.MIME_DOCX] = downloadUrl(identifier, it.name) }
+        md?.let { picked[Formats.MIME_MARKDOWN] = downloadUrl(identifier, it.name) }
         return picked
     }
 }

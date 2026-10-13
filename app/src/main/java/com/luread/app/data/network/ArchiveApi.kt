@@ -30,7 +30,10 @@ class ArchiveApi(
         )
 
         /** Filter dasar: teks + format yang bisa dibaca Luread. */
-        const val BASE_QUERY = "mediatype:texts AND format:(EPUB OR \"Text PDF\" OR DjVuTXT)"
+        const val BASE_QUERY = "mediatype:texts AND format:(EPUB OR \"Text PDF\" OR DjVuTXT OR DJVU OR " +
+            "HTML OR \"additional text\" OR \"plain text\" OR \"Single Page\" OR " +
+            "\"Comic Book ZIP\" OR CBZ OR \"Comics\" OR " +
+            "MOBI OR Mobipocket OR FictionBook2 OR RTF OR \"Microsoft Word\")"
 
         /** Browse ketika pencarian kosong (diverifikasi memberi hasil buku). */
         const val DEFAULT_TAIL = " AND subject:fiction"

@@ -105,6 +105,11 @@ fun SettingsScreen(onOpenTranslator: () -> Unit) {
             selectedArgb = state.customAccentArgb,
             onSelect = vm::setCustomAccent,
         )
+        Text(
+            text = stringResource(R.string.settings_radius),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         ChipRow(
             options = RadiusPreset.entries.map { it.name to it.name },
             selected = state.cardRadius.name,
@@ -116,15 +121,15 @@ fun SettingsScreen(onOpenTranslator: () -> Unit) {
             label = stringResource(R.string.settings_grid_columns, state.clampedGridColumns),
             value = state.gridColumns.toFloat(),
             onValueChange = { vm.setGridColumns(it.toInt()) },
-            valueRange = 2f..5f,
-            steps = 2,
+            valueRange = 1f..6f,
+            steps = 4,
         )
         LabeledSlider(
             label = stringResource(R.string.settings_cover_ratio, "%.2f".format(state.clampedCoverRatio)),
             value = state.coverAspectRatio,
             onValueChange = vm::setCoverAspectRatio,
-            valueRange = 0.5f..1.2f,
-            steps = 13,
+            valueRange = 0.4f..1.5f,
+            steps = 21,
         )
         ToggleRow(
             title = stringResource(R.string.settings_compact_metadata),
@@ -136,10 +141,36 @@ fun SettingsScreen(onOpenTranslator: () -> Unit) {
             checked = state.reduceMotion,
             onCheckedChange = vm::setReduceMotion,
         )
+        // Home section toggles
+        Text(
+            text = stringResource(R.string.settings_home_sections),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        ToggleRow(
+            title = stringResource(R.string.settings_show_continue_reading),
+            checked = state.showContinueReading,
+            onCheckedChange = vm::setShowContinueReading,
+        )
         ToggleRow(
             title = stringResource(R.string.settings_show_manga_home),
             checked = state.showMangaHome,
             onCheckedChange = vm::setShowMangaHome,
+        )
+        ToggleRow(
+            title = stringResource(R.string.settings_show_comics_home),
+            checked = state.showComicsHome,
+            onCheckedChange = vm::setShowComicsHome,
+        )
+        ToggleRow(
+            title = stringResource(R.string.settings_show_knowledge_home),
+            checked = state.showKnowledgeHome,
+            onCheckedChange = vm::setShowKnowledgeHome,
+        )
+        ToggleRow(
+            title = stringResource(R.string.settings_show_stats_home),
+            checked = state.showStatsHome,
+            onCheckedChange = vm::setShowStatsHome,
         )
 
         // ------------------------------------------------------------------
@@ -150,22 +181,22 @@ fun SettingsScreen(onOpenTranslator: () -> Unit) {
             label = stringResource(R.string.settings_font_size, state.clampedFontSize.toInt()),
             value = state.fontSizeSp,
             onValueChange = vm::setFontSize,
-            valueRange = 14f..30f,
-            steps = 15,
+            valueRange = 10f..40f,
+            steps = 29,
         )
         LabeledSlider(
             label = stringResource(R.string.settings_line_height, "%.1f×".format(state.clampedLineHeight)),
             value = state.lineHeightMul,
             onValueChange = vm::setLineHeight,
-            valueRange = 1.0f..2.2f,
-            steps = 11,
+            valueRange = 1.0f..2.5f,
+            steps = 14,
         )
         LabeledSlider(
             label = stringResource(R.string.settings_dim_overlay, (state.clampedDim * 100).toInt()),
             value = state.dimOverlay,
             onValueChange = vm::setDimOverlay,
-            valueRange = 0f..0.7f,
-            steps = 13,
+            valueRange = 0f..0.8f,
+            steps = 15,
         )
         ToggleRow(
             title = stringResource(R.string.settings_page_animation),
@@ -183,14 +214,211 @@ fun SettingsScreen(onOpenTranslator: () -> Unit) {
             onCheckedChange = vm::setTrackReadingStats,
         )
         Text(
+            text = stringResource(R.string.settings_font_family, state.fontFamily),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        ChipRow(
+            options = listOf(
+                "default" to "Default",
+                "serif" to "Serif",
+                "sans" to "Sans-serif",
+                "monospace" to "Monospace",
+            ),
+            selected = state.fontFamily,
+            onSelect = vm::setFontFamily,
+        )
+        ToggleRow(
+            title = stringResource(R.string.settings_justify_text),
+            checked = state.justifyText,
+            onCheckedChange = vm::setJustifyText,
+        )
+        LabeledSlider(
+            label = stringResource(R.string.settings_brightness, (state.clampedBrightness * 100).toInt()),
+            value = state.brightnessOverride,
+            onValueChange = vm::setBrightnessOverride,
+            valueRange = -1f..1f,
+            steps = 19,
+        )
+        ToggleRow(
+            title = stringResource(R.string.settings_volume_nav),
+            checked = state.volumeKeyNavigation,
+            onCheckedChange = vm::setVolumeKeyNavigation,
+        )
+        ToggleRow(
+            title = stringResource(R.string.settings_tap_left_next),
+            checked = state.tapLeftForNext,
+            onCheckedChange = vm::setTapLeftForNext,
+        )
+        ToggleRow(
+            title = stringResource(R.string.settings_show_page_numbers),
+            checked = state.showPageNumbers,
+            onCheckedChange = vm::setShowPageNumbers,
+        )
+        Text(
+            text = stringResource(R.string.settings_reading_mode, state.defaultReadingMode),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        ChipRow(
+            options = listOf(
+                "scroll" to "Scroll",
+                "paged" to "Paged",
+                "webtoon" to "Webtoon",
+            ),
+            selected = state.defaultReadingMode,
+            onSelect = vm::setDefaultReadingMode,
+        )
+        // Manga reading
+        Text(
+            text = stringResource(R.string.settings_manga_direction, state.mangaReadingDirection),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        ChipRow(
+            options = listOf(
+                "ltr" to "Left to Right",
+                "rtl" to "Right to Left (Manga)",
+            ),
+            selected = state.mangaReadingDirection,
+            onSelect = vm::setMangaReadingDirection,
+        )
+        ToggleRow(
+            title = stringResource(R.string.settings_auto_scroll_manga),
+            checked = state.autoScrollManga,
+            onCheckedChange = vm::setAutoScrollManga,
+        )
+        LabeledSlider(
+            label = stringResource(R.string.settings_auto_scroll_speed, "%.1f".format(state.clampedAutoScrollSpeed)),
+            value = state.autoScrollSpeed,
+            onValueChange = vm::setAutoScrollSpeed,
+            valueRange = 0.1f..5f,
+            steps = 48,
+        )
+        Text(
+            text = stringResource(R.string.settings_manga_quality, state.mangaImageQuality),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        ChipRow(
+            options = listOf(
+                "data_saver" to "Data Saver",
+                "full" to "Full Quality",
+            ),
+            selected = state.mangaImageQuality,
+            onSelect = vm::setMangaImageQuality,
+        )
+        // Translate
+        Text(
             text = stringResource(R.string.settings_translate_lang, state.defaultTranslateLanguage),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
         )
         ChipRow(
-            options = listOf("id" to "Indonesia", "en" to "English", "ms" to "Melayu", "ja" to "日本語"),
+            options = listOf(
+                "id" to "Indonesia",
+                "en" to "English",
+                "ms" to "Melayu",
+                "ja" to "日本語",
+                "zh" to "中文",
+                "ko" to "한국어",
+                "ar" to "العربية",
+                "hi" to "हिन्दी",
+                "es" to "Español",
+                "fr" to "Français",
+                "de" to "Deutsch",
+                "pt" to "Português",
+                "ru" to "Русский",
+                "th" to "ไทย",
+                "vi" to "Tiếng Việt",
+            ),
             selected = state.defaultTranslateLanguage,
             onSelect = vm::setDefaultTranslateLanguage,
+        )
+        LabeledSlider(
+            label = stringResource(R.string.settings_translate_chunk, state.clampedTranslateChunk),
+            value = state.translateChunkSize.toFloat(),
+            onValueChange = { vm.setTranslateChunkSize(it.toInt()) },
+            valueRange = 1000f..8000f,
+            steps = 13,
+        )
+        // Library
+        Text(
+            text = stringResource(R.string.settings_default_sort, state.defaultSort),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        ChipRow(
+            options = listOf(
+                "recent" to "Recently Added",
+                "title" to "Title A-Z",
+                "author" to "Author",
+                "progress" to "Reading Progress",
+                "last_read" to "Last Read",
+                "finished" to "Finished",
+            ),
+            selected = state.defaultSort,
+            onSelect = vm::setDefaultSort,
+        )
+        ToggleRow(
+            title = stringResource(R.string.settings_show_finished),
+            checked = state.showFinishedBooks,
+            onCheckedChange = vm::setShowFinishedBooks,
+        )
+        ToggleRow(
+            title = stringResource(R.string.settings_auto_download),
+            checked = state.autoDownloadNext,
+            onCheckedChange = vm::setAutoDownloadNext,
+        )
+        Text(
+            text = stringResource(R.string.settings_import_policy, state.importDuplicatePolicy),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        ChipRow(
+            options = listOf(
+                "skip" to "Skip Duplicates",
+                "replace" to "Replace",
+                "rename" to "Keep Both",
+            ),
+            selected = state.importDuplicatePolicy,
+            onSelect = vm::setImportDuplicatePolicy,
+        )
+        // Network
+        ToggleRow(
+            title = stringResource(R.string.settings_wifi_only),
+            checked = state.wifiOnlyDownload,
+            onCheckedChange = vm::setWifiOnlyDownload,
+        )
+        LabeledSlider(
+            label = stringResource(R.string.settings_cache_size, state.clampedCacheSize),
+            value = state.cacheSizeMb.toFloat(),
+            onValueChange = { vm.setCacheSizeMb(it.toInt()) },
+            valueRange = 64f..2048f,
+            steps = 30,
+        )
+        LabeledSlider(
+            label = stringResource(R.string.settings_timeout, state.clampedTimeout),
+            value = state.timeoutSeconds.toFloat(),
+            onValueChange = { vm.setTimeoutSeconds(it.toInt()) },
+            valueRange = 10f..120f,
+            steps = 21,
+        )
+        // Accessibility
+        ToggleRow(
+            title = stringResource(R.string.settings_high_contrast),
+            checked = state.highContrast,
+            onCheckedChange = vm::setHighContrast,
+        )
+        ToggleRow(
+            title = stringResource(R.string.settings_larger_touch),
+            checked = state.largerTouchTargets,
+            onCheckedChange = vm::setLargerTouchTargets,
+        )
+        ToggleRow(
+            title = stringResource(R.string.settings_bold_text),
+            checked = state.boldText,
+            onCheckedChange = vm::setBoldText,
         )
 
         // ------------------------------------------------------------------

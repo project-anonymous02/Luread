@@ -73,13 +73,22 @@ class MangaDexApi(
             return builder.buildString()
         }
 
-        /** URL feed chapter satu manga, bahasa Indonesia lalu Inggris. */
-        fun feedUrl(mangaId: String, limit: Int = 100, offset: Int = 0): String {
+        /**
+         * URL feed chapter satu manga.
+         * [languages] daftar kode translatedLanguage; kosong = semua bahasa.
+         */
+        fun feedUrl(
+            mangaId: String,
+            limit: Int = 100,
+            offset: Int = 0,
+            languages: List<String> = listOf("id", "en"),
+        ): String {
             val builder = URLBuilder("$BASE_URL/manga/$mangaId/feed")
             builder.parameters.append("limit", limit.coerceIn(1, 500).toString())
             builder.parameters.append("offset", offset.coerceAtLeast(0).toString())
-            builder.parameters.append("translatedLanguage[]", "id")
-            builder.parameters.append("translatedLanguage[]", "en")
+            languages.forEach { lang ->
+                builder.parameters.append("translatedLanguage[]", lang)
+            }
             builder.parameters.append("order[chapter]", "asc")
             return builder.buildString()
         }
@@ -152,8 +161,13 @@ class MangaDexApi(
                 ?: throw IllegalStateException("Empty manga payload")
         }
 
-    suspend fun chapters(mangaId: String, limit: Int = 100, offset: Int = 0): ApiResult<MangaDexFeedResponse> =
-        getJson(feedUrl(mangaId, limit, offset)) {
+    suspend fun chapters(
+        mangaId: String,
+        limit: Int = 100,
+        offset: Int = 0,
+        languages: List<String> = listOf("id", "en"),
+    ): ApiResult<MangaDexFeedResponse> =
+        getJson(feedUrl(mangaId, limit, offset, languages)) {
             json.decodeFromString(MangaDexFeedResponse.serializer(), it)
         }
 

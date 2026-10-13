@@ -58,7 +58,7 @@ object Routes {
     const val TRANSLATOR = "translator?text={text}"
     const val MANGA_LIST = "manga"
     const val MANGA_DETAIL = "manga/{mangaId}"
-    const val MANGA_READ = "manga/read/{chapterId}"
+    const val MANGA_READ = "manga/read/{mangaId}/{chapterId}"
 
     fun book(id: String): String = "book/$id"
     fun read(id: String): String = "read/$id"
@@ -66,7 +66,7 @@ object Routes {
         if (text.isNullOrEmpty()) "translator?text=" else "translator?text=${android.net.Uri.encode(text)}"
 
     fun mangaDetail(id: String): String = "manga/$id"
-    fun mangaRead(chapterId: String): String = "manga/read/$chapterId"
+    fun mangaRead(mangaId: String, chapterId: String): String = "manga/read/$mangaId/$chapterId"
 
     val topLevel = setOf(HOME, DISCOVER, LIBRARY, ACTIVITY, SETTINGS)
 }
@@ -195,17 +195,27 @@ private fun AppNavHost(navController: NavHostController, modifier: Modifier = Mo
             MangaDetailScreen(
                 mangaId = mangaId,
                 onBack = { navController.popBackStack() },
-                onReadChapter = { navController.navigate(Routes.mangaRead(it)) },
+                onReadChapter = { chapterId -> navController.navigate(Routes.mangaRead(mangaId, chapterId)) },
             )
         }
         composable(
             route = Routes.MANGA_READ,
-            arguments = listOf(navArgument("chapterId") { type = NavType.StringType }),
+            arguments = listOf(
+                navArgument("mangaId") { type = NavType.StringType },
+                navArgument("chapterId") { type = NavType.StringType },
+            ),
         ) { entry ->
             val chapterId = entry.arguments?.getString("chapterId") ?: return@composable
+            val mangaId = entry.arguments?.getString("mangaId") ?: return@composable
             MangaReaderScreen(
                 chapterId = chapterId,
+                mangaId = mangaId,
                 onBack = { navController.popBackStack() },
+                onNavigateChapter = { newChapterId ->
+                    navController.navigate(Routes.mangaRead(mangaId, newChapterId)) {
+                        popUpTo(Routes.MANGA_READ) { inclusive = true }
+                    }
+                },
             )
         }
         composable(

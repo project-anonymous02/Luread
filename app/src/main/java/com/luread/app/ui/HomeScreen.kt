@@ -57,6 +57,10 @@ fun HomeScreen(
     val settingsVm = appViewModel { SettingsViewModel(it.settings, it.library) }
     val settings by settingsVm.state.collectAsStateWithLifecycle()
     val showManga = settings.showMangaHome
+    val showComics = settings.showComicsHome
+    val showKnowledge = settings.showKnowledgeHome
+    val showContinue = settings.showContinueReading
+    val showStats = settings.showStatsHome
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -75,15 +79,17 @@ fun HomeScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                StatsRow(
-                    books = stats.libraryCount,
-                    downloaded = stats.downloadedCount,
-                    todayMillis = stats.todayMillis,
-                )
+                if (showStats) {
+                    StatsRow(
+                        books = stats.libraryCount,
+                        downloaded = stats.downloadedCount,
+                        todayMillis = stats.todayMillis,
+                    )
+                }
             }
         }
 
-        if (continueReading.isNotEmpty()) {
+        if (showContinue && continueReading.isNotEmpty()) {
             item {
                 SectionHeader(title = stringResource(R.string.home_continue))
                 LazyRow(
@@ -141,15 +147,17 @@ fun HomeScreen(
             )
         }
 
-        item {
-            HomeBookRow(
-                title = stringResource(R.string.home_knowledge),
-                state = knowledge,
-                keyPrefix = "know",
-                onOpenBook = onOpenBook,
-                onSeeAll = onOpenDiscover,
-                onRetry = vm::refresh,
-            )
+        if (showKnowledge) {
+            item {
+                HomeBookRow(
+                    title = stringResource(R.string.home_knowledge),
+                    state = knowledge,
+                    keyPrefix = "know",
+                    onOpenBook = onOpenBook,
+                    onSeeAll = onOpenDiscover,
+                    onRetry = vm::refresh,
+                )
+            }
         }
 
         if (showManga) {
@@ -163,15 +171,17 @@ fun HomeScreen(
             }
         }
 
-        item {
-            HomeBookRow(
-                title = stringResource(R.string.home_comics),
-                state = comics,
-                keyPrefix = "comic",
-                onOpenBook = onOpenBook,
-                onSeeAll = onOpenDiscover,
-                onRetry = vm::refresh,
-            )
+        if (showComics) {
+            item {
+                HomeBookRow(
+                    title = stringResource(R.string.home_comics),
+                    state = comics,
+                    keyPrefix = "comic",
+                    onOpenBook = onOpenBook,
+                    onSeeAll = onOpenDiscover,
+                    onRetry = vm::refresh,
+                )
+            }
         }
 
         item {

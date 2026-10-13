@@ -89,11 +89,12 @@ class HomeViewModel(
             }
         }
         viewModelScope.launch {
-            // Indonesia: Open Library language=ind.
+            // Indonesia: Internet Archive language:ind (bukan Open Library yang
+            // mengembalikan karya Inggris yang punya edisi terjemahan Indonesia).
             when (
                 val result = catalog.firstPage(
                     CatalogQuery(languages = listOf("id")),
-                    source = com.luread.app.data.catalog.BookSource.OPEN_LIBRARY,
+                    source = com.luread.app.data.catalog.BookSource.INTERNET_ARCHIVE,
                 )
             ) {
                 is ApiResult.Success -> _indonesian.value = CatalogUiState.Content(result.value)
@@ -144,10 +145,10 @@ class HomeViewModel(
             }
         }
         viewModelScope.launch {
-            // Komik & comic books (Internet Archive, PDF/CBZ yang bisa diunduh).
+            // Komik: Internet Archive cari comic/manga/graphic novel.
             when (
                 val result = catalog.firstPage(
-                    CatalogQuery(search = "subject:comic books"),
+                    CatalogQuery(search = "comic"),
                     source = com.luread.app.data.catalog.BookSource.INTERNET_ARCHIVE,
                 )
             ) {

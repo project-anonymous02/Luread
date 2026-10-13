@@ -165,9 +165,8 @@ class ReaderViewModel(
      * Terjemahkan [text] secara inline memakai TranslationService (failover
      * Google gtx -> MyMemory). Hasil ditampilkan lewat [translate].
      *
-     * Teks dipotong ke [MAX_TRANSLATE_CHARS] karakter agar translate-select-all
-     * pada bab panjang tidak bikin UI lag (Compose Text ratusan ribu karakter
-     * sangat berat). Sisa teks diberi tanda "…".
+     * Teks panjang dipotong per [CHUNK_TRANSLATE_CHARS] dan diterjemahkan
+     * berurutan sampai selesai, lalu digabung menjadi terjemahan penuh.
      */
     fun translateInline(text: String) {
         if (text.isBlank()) {
@@ -176,24 +175,60 @@ class ReaderViewModel(
             )
             return
         }
-        val capped = text.take(MAX_TRANSLATE_CHARS)
         _translate.value = TranslateUi.Loading
         viewModelScope.launch {
-            // Target: bahasa Indonesia (default app); bisa dikembangkan jadi preferensi.
             val target = settings.value.defaultTranslateLanguage.ifBlank { "id" }
-            when (val outcome = container.translator.translate(capped, "auto", target)) {
-                is com.luread.app.data.translate.TranslationService.Outcome.Success -> {
-                    _translate.value = TranslateUi.Done(
-                        original = capped,
-                        translated = outcome.result.translatedText,
-                        lang = outcome.result.detectedSourceLang,
-                    )
-                }
-                is com.luread.app.data.translate.TranslationService.Outcome.Failure -> {
-                    _translate.value = TranslateUi.Failed(outcome.message)
+            // Pecah per blok kalimat agar tidak melebihi batas provider.
+            val chunks = splitForTranslation(text, CHUNK_TRANSLATE_CHARS)
+            val results = mutableListOf<String>()
+            var detectedLang: String? = null
+            for ((i, chunk) in chunks.withIndex()) {
+                when (val outcome = container.translator.translate(chunk, "auto", target)) {
+                    is com.luread.app.data.translate.TranslationService.Outcome.Success -> {
+                        results.add(outcome.result.translatedText)
+                        if (detectedLang == null) {
+                            detectedLang = outcome.result.detectedSourceLang
+                        }
+                    }
+                    is com.luread.app.data.translate.TranslationService.Outcome.Failure -> {
+                        // Chunk gagal: sisa teks ditandai gagal.
+                        val partial = results.joinToString("")
+                        _translate.value = TranslateUi.Done(
+                            original = text,
+                            translated = partial + "\n\n[Chunk ${i + 1}/${chunks.size} gagal: ${outcome.message}]",
+                            lang = detectedLang,
+                        )
+                        return@launch
+                    }
                 }
             }
+            _translate.value = TranslateUi.Done(
+                original = text,
+                translated = results.joinToString(""),
+                lang = detectedLang,
+            )
         }
+    }
+
+    /**
+     * Pecah [text] menjadi potongan ≤ [maxChars] di batas kalimat/kalimat
+     * sehingga terjemahan per blok tidak terpotong di tengah kata.
+     */
+    private fun splitForTranslation(text: String, maxChars: Int): List<String> {
+        if (text.length <= maxChars) return listOf(text)
+        val chunks = mutableListOf<String>()
+        var remaining = text
+        while (remaining.length > maxChars) {
+            // Cari batas kalimat terakhir dalam window.
+            val window = remaining.substring(0, maxChars)
+            val lastPeriod = window.lastIndexOf(". ")
+            val lastNewline = window.lastIndexOf('\n')
+            val cut = maxOf(lastPeriod + 1, lastNewline + 1, maxChars / 2)
+            chunks.add(remaining.substring(0, cut).trim())
+            remaining = remaining.substring(cut).trimStart()
+        }
+        if (remaining.isNotBlank()) chunks.add(remaining)
+        return chunks.filter { it.isNotBlank() }
     }
 
     /** Ambil teks halaman yang sedang dibaca (mode TEXT) untuk diterjemahkan. */
@@ -499,8 +534,8 @@ class ReaderViewModel(
     class ReaderException(message: String) : Exception(message)
 
     companion object {
-        /** Batas karakter teks yang dikirim ke penerjemah agar UI tidak lag. */
-        const val MAX_TRANSLATE_CHARS = 4000
+        /** Batas karakter per chunk terjemahan ( Google gtx limit ~5000). */
+        const val CHUNK_TRANSLATE_CHARS = 4000
 
         fun decodeLocation(json: String?): SavedLocation? = LocationCodec.decode(json)
 

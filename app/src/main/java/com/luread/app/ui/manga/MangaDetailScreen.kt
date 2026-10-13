@@ -219,6 +219,12 @@ fun MangaDetailScreen(
                                 text = buildString {
                                     append("Ch. ")
                                     append(ch.number ?: "?")
+                                    // Tampilkan bahasa agar user tahu isi chapter.
+                                    when (ch.language) {
+                                        "id" -> append(" - Indonesian")
+                                        "en" -> append(" - English")
+                                        else -> ch.language?.let { append(" - ").append(it.uppercase()) }
+                                    }
                                     if (!ch.title.isNullOrBlank()) {
                                         append(" — ")
                                         append(ch.title)
@@ -229,7 +235,6 @@ fun MangaDetailScreen(
                             )
                             Text(
                                 text = listOfNotNull(
-                                    ch.language,
                                     ch.pages?.let { "$it pp" },
                                 ).joinToString(" · "),
                                 style = MaterialTheme.typography.labelSmall,

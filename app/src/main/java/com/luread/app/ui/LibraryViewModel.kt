@@ -312,13 +312,19 @@ class LibraryViewModel(
     }
 
     companion object {
-        /** MIME yang punya reader engine dan layak diimpor dari ZIP. */
+        /** MIME yang bisa diimpor (punya reader atau minimal tersimpan). */
         private val READABLE_IMPORT_MIMES = setOf(
             Formats.MIME_EPUB,
             Formats.MIME_HTML,
             Formats.MIME_TEXT,
             Formats.MIME_PDF,
             Formats.MIME_CBZ,
+            Formats.MIME_MOBI,
+            Formats.MIME_FB2,
+            Formats.MIME_DJVU,
+            Formats.MIME_RTF,
+            Formats.MIME_DOCX,
+            Formats.MIME_MARKDOWN,
         )
     }
 }
