@@ -41,6 +41,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -155,6 +156,8 @@ fun ReaderScreen(
                         startPage = vm.savedPage(),
                         fontSp = settings.clampedFontSize,
                         onPage = vm::onProgressPage,
+                        lineHeightMul = settings.clampedLineHeight,
+                        animatePages = settings.pageAnimation,
                     )
 
                     ReaderViewModel.Mode.CBZ -> com.luread.app.ui.reader.CbzReader(
@@ -167,6 +170,14 @@ fun ReaderScreen(
                         path = book.localPath.orEmpty(),
                         fontSp = settings.clampedFontSize,
                         onProgress = { value -> vm.onProgress(value, null) },
+                    )
+                }
+
+                if (settings.clampedDim > 0f) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = settings.clampedDim)),
                     )
                 }
 

@@ -83,7 +83,16 @@ class MainActivity : ComponentActivity() {
             val settings by container.settings.settings
                 .collectAsStateWithLifecycle(initialValue = UserSettings())
 
-            LureadTheme(mode = settings.themeMode, accent = settings.accent) {
+            val customAccent = settings.customAccentArgb?.let {
+                androidx.compose.ui.graphics.Color(it)
+            }
+
+            LureadTheme(
+                mode = settings.themeMode,
+                accent = settings.accent,
+                customAccent = customAccent,
+                extras = settings.extras(),
+            ) {
                 CompositionLocalProvider(LocalAppContainer provides container) {
                     LureadRoot()
                 }

@@ -230,6 +230,7 @@ val LocalLureadExtras = staticCompositionLocalOf { LureadExtras() }
 fun LureadTheme(
     mode: ThemeMode = ThemeMode.SYSTEM,
     accent: AccentPreset = AccentPreset.Clay,
+    customAccent: Color? = null,
     extras: LureadExtras = LureadExtras(),
     content: @Composable () -> Unit,
 ) {
@@ -238,7 +239,16 @@ fun LureadTheme(
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true
     }
-    val colorScheme = if (dark) darkScheme(accent) else lightScheme(accent)
+    val baseScheme = if (dark) darkScheme(accent) else lightScheme(accent)
+    val colorScheme = if (customAccent != null) {
+        baseScheme.copy(
+            primary = customAccent,
+            primaryContainer = customAccent.copy(alpha = if (dark) 0.20f else 0.14f),
+            onPrimaryContainer = if (dark) customAccent else Color.White,
+        )
+    } else {
+        baseScheme
+    }
     val shapes = Shapes(
         extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
         small = androidx.compose.foundation.shape.RoundedCornerShape(extras.radius.dp * 0.5f),

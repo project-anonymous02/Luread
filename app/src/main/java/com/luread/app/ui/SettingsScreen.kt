@@ -1,9 +1,11 @@
 package com.luread.app.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +26,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -36,6 +42,7 @@ import com.luread.app.core.design.LureadSpace.Lg
 import com.luread.app.core.design.LureadSpace.Md
 import com.luread.app.core.design.LureadSpace.SectionGap
 import com.luread.app.core.design.LureadSpace.Sm
+import com.luread.app.core.design.RadiusPreset
 import com.luread.app.core.design.SectionHeader
 import com.luread.app.core.design.ThemeMode
 
@@ -58,6 +65,9 @@ fun SettingsScreen(onOpenTranslator: () -> Unit) {
             modifier = Modifier.padding(top = Lg),
         )
 
+        // ------------------------------------------------------------------
+        // Tampilan
+        // ------------------------------------------------------------------
         SectionHeader(title = stringResource(R.string.settings_appearance))
         ChipRow(
             options = ThemeMode.entries.map { mode ->
@@ -74,6 +84,11 @@ fun SettingsScreen(onOpenTranslator: () -> Unit) {
                 ThemeMode.entries.firstOrNull { it.name == name }?.let(vm::setThemeMode)
             },
         )
+        Text(
+            text = stringResource(R.string.settings_accent),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         ChipRow(
             options = AccentPreset.entries.map { it.name to it.label },
             selected = state.accent.name,
@@ -81,18 +96,81 @@ fun SettingsScreen(onOpenTranslator: () -> Unit) {
                 AccentPreset.entries.firstOrNull { it.name == name }?.let(vm::setAccent)
             },
         )
-
-        SectionHeader(title = stringResource(R.string.settings_reading))
         Text(
-            text = stringResource(R.string.settings_font_size, state.clampedFontSize.toInt()),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+            text = stringResource(R.string.settings_custom_accent),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Slider(
+        CustomAccentRow(
+            selectedArgb = state.customAccentArgb,
+            onSelect = vm::setCustomAccent,
+        )
+        ChipRow(
+            options = RadiusPreset.entries.map { it.name to it.name },
+            selected = state.cardRadius.name,
+            onSelect = { name ->
+                RadiusPreset.entries.firstOrNull { it.name == name }?.let(vm::setCardRadius)
+            },
+        )
+        LabeledSlider(
+            label = stringResource(R.string.settings_grid_columns, state.clampedGridColumns),
+            value = state.gridColumns.toFloat(),
+            onValueChange = { vm.setGridColumns(it.toInt()) },
+            valueRange = 2f..5f,
+            steps = 2,
+        )
+        LabeledSlider(
+            label = stringResource(R.string.settings_cover_ratio, "%.2f".format(state.clampedCoverRatio)),
+            value = state.coverAspectRatio,
+            onValueChange = vm::setCoverAspectRatio,
+            valueRange = 0.5f..1.2f,
+            steps = 13,
+        )
+        ToggleRow(
+            title = stringResource(R.string.settings_compact_metadata),
+            checked = state.compactMetadata,
+            onCheckedChange = vm::setCompactMetadata,
+        )
+        ToggleRow(
+            title = stringResource(R.string.settings_reduce_motion),
+            checked = state.reduceMotion,
+            onCheckedChange = vm::setReduceMotion,
+        )
+        ToggleRow(
+            title = stringResource(R.string.settings_show_manga_home),
+            checked = state.showMangaHome,
+            onCheckedChange = vm::setShowMangaHome,
+        )
+
+        // ------------------------------------------------------------------
+        // Membaca
+        // ------------------------------------------------------------------
+        SectionHeader(title = stringResource(R.string.settings_reading))
+        LabeledSlider(
+            label = stringResource(R.string.settings_font_size, state.clampedFontSize.toInt()),
             value = state.fontSizeSp,
             onValueChange = vm::setFontSize,
             valueRange = 14f..30f,
             steps = 15,
+        )
+        LabeledSlider(
+            label = stringResource(R.string.settings_line_height, "%.1f×".format(state.clampedLineHeight)),
+            value = state.lineHeightMul,
+            onValueChange = vm::setLineHeight,
+            valueRange = 1.0f..2.2f,
+            steps = 11,
+        )
+        LabeledSlider(
+            label = stringResource(R.string.settings_dim_overlay, (state.clampedDim * 100).toInt()),
+            value = state.dimOverlay,
+            onValueChange = vm::setDimOverlay,
+            valueRange = 0f..0.7f,
+            steps = 13,
+        )
+        ToggleRow(
+            title = stringResource(R.string.settings_page_animation),
+            checked = state.pageAnimation,
+            onCheckedChange = vm::setPageAnimation,
         )
         ToggleRow(
             title = stringResource(R.string.settings_keep_screen_on),
@@ -104,7 +182,20 @@ fun SettingsScreen(onOpenTranslator: () -> Unit) {
             checked = state.trackReadingStats,
             onCheckedChange = vm::setTrackReadingStats,
         )
+        Text(
+            text = stringResource(R.string.settings_translate_lang, state.defaultTranslateLanguage),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        ChipRow(
+            options = listOf("id" to "Indonesia", "en" to "English", "ms" to "Melayu", "ja" to "日本語"),
+            selected = state.defaultTranslateLanguage,
+            onSelect = vm::setDefaultTranslateLanguage,
+        )
 
+        // ------------------------------------------------------------------
+        // Alat
+        // ------------------------------------------------------------------
         SectionHeader(title = stringResource(R.string.settings_tools))
         Column(
             modifier = Modifier
@@ -133,6 +224,9 @@ fun SettingsScreen(onOpenTranslator: () -> Unit) {
             )
         }
 
+        // ------------------------------------------------------------------
+        // Tentang
+        // ------------------------------------------------------------------
         SectionHeader(title = stringResource(R.string.settings_about))
         val aboutContext = LocalContext.current
         val logoBitmap = remember(aboutContext) {
@@ -167,12 +261,93 @@ fun SettingsScreen(onOpenTranslator: () -> Unit) {
             modifier = Modifier.padding(top = 4.dp),
         )
         Text(
+            text = stringResource(R.string.manga_credit),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
             text = stringResource(R.string.settings_version),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = SectionGap),
         )
     }
+}
+
+@Composable
+private fun CustomAccentRow(
+    selectedArgb: Long?,
+    onSelect: (Long?) -> Unit,
+) {
+    val swatches = listOf(
+        null to stringResource(R.string.settings_accent_preset),
+        0xFFA34A21L to "Clay",
+        0xFF2F5D50L to "Pine",
+        0xFF33477AL to "Indigo",
+        0xFF6E3358L to "Plum",
+        0xFF1565C0L to "Ocean",
+        0xFF2E7D32L to "Forest",
+        0xFFC62828L to "Ruby",
+        0xFF6A1B9AL to "Violet",
+        0xFFEF6C00L to "Amber",
+    )
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(Sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        swatches.forEach { (argb, label) ->
+            val selected = selectedArgb == argb
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(
+                        if (argb == null) MaterialTheme.colorScheme.surfaceVariant
+                        else Color(argb),
+                    )
+                    .clickable { onSelect(argb) }
+                    .padding(all = if (selected) 14.dp else 10.dp),
+            ) {
+                if (argb == null) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            if (selected) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LabeledSlider(
+    label: String,
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+) {
+    Text(
+        text = label,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+    )
+    Slider(
+        value = value,
+        onValueChange = onValueChange,
+        valueRange = valueRange,
+        steps = steps,
+    )
 }
 
 @Composable

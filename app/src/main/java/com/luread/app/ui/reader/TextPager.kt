@@ -31,6 +31,8 @@ fun TextPager(
     fontSp: Float,
     onPage: (pageIndex: Int, pageCount: Int) -> Unit,
     modifier: Modifier = Modifier,
+    lineHeightMul: Float = 1.4f,
+    animatePages: Boolean = true,
 ) {
     if (pages.isEmpty()) {
         LoadingState(modifier = modifier)
@@ -52,13 +54,14 @@ fun TextPager(
             .fillMaxSize()
             .background(Color.White),
         pageSpacing = 8.dp,
+        userScrollEnabled = animatePages,
     ) { index ->
         // Halaman yang sedang tidak terlihat tidak perlu digambar.
         if (kotlin.math.abs(pagerState.currentPage - index) <= 1) {
             Text(
                 text = pages[index],
                 fontSize = fontSp.sp,
-                lineHeight = (fontSp * 1.6f).sp,
+                lineHeight = (fontSp * lineHeightMul.coerceIn(1.0f, 2.2f)).sp,
                 fontFamily = FontFamily.Serif,
                 color = Color.Black,
                 modifier = Modifier

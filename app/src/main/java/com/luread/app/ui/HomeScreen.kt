@@ -54,6 +54,9 @@ fun HomeScreen(
     val knowledge by vm.knowledge.collectAsStateWithLifecycle()
     val mangaState by vm.manga.collectAsStateWithLifecycle()
     val comics by vm.comics.collectAsStateWithLifecycle()
+    val settingsVm = appViewModel { SettingsViewModel(it.settings, it.library) }
+    val settings by settingsVm.state.collectAsStateWithLifecycle()
+    val showManga = settings.showMangaHome
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -149,13 +152,15 @@ fun HomeScreen(
             )
         }
 
-        item {
-            MangaHomeRow(
-                state = mangaState,
-                onOpenManga = onOpenManga,
-                onSeeAll = onOpenMangaList,
-                onRetry = vm::refresh,
-            )
+        if (showManga) {
+            item {
+                MangaHomeRow(
+                    state = mangaState,
+                    onOpenManga = onOpenManga,
+                    onSeeAll = onOpenMangaList,
+                    onRetry = vm::refresh,
+                )
+            }
         }
 
         item {
