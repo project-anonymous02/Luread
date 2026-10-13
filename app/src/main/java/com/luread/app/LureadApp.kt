@@ -6,6 +6,8 @@ import com.luread.app.data.catalog.CatalogRepository
 import com.luread.app.data.db.LureadDatabase
 import com.luread.app.data.downloads.DownloadManager
 import com.luread.app.data.library.LibraryRepository
+import com.luread.app.data.manga.MangaDexApi
+import com.luread.app.data.manga.MangaRepository
 import com.luread.app.data.network.ArchiveApi
 import com.luread.app.data.network.GutendexApi
 import com.luread.app.data.network.HttpConfig
@@ -42,6 +44,8 @@ class AppContainer(context: Context) {
     }
 
     val translator by lazy { com.luread.app.data.translate.TranslationService(httpClient) }
+
+    val manga by lazy { MangaRepository(MangaDexApi(httpClient)) }
 
     val database by lazy { LureadDatabase.get(appContext) }
 

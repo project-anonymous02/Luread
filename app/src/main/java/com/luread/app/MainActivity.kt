@@ -41,6 +41,9 @@ import com.luread.app.ui.LocalAppContainer
 import com.luread.app.ui.ReaderScreen
 import com.luread.app.ui.SettingsScreen
 import com.luread.app.ui.TranslatorScreen
+import com.luread.app.ui.manga.MangaDetailScreen
+import com.luread.app.ui.manga.MangaListScreen
+import com.luread.app.ui.manga.MangaReaderScreen
 import com.luread.app.R
 
 /** Rute navigasi utama. */
@@ -53,11 +56,17 @@ object Routes {
     const val BOOK = "book/{bookId}"
     const val READ = "read/{bookId}"
     const val TRANSLATOR = "translator?text={text}"
+    const val MANGA_LIST = "manga"
+    const val MANGA_DETAIL = "manga/{mangaId}"
+    const val MANGA_READ = "manga/read/{chapterId}"
 
     fun book(id: String): String = "book/$id"
     fun read(id: String): String = "read/$id"
     fun translator(text: String? = null): String =
         if (text.isNullOrEmpty()) "translator?text=" else "translator?text=${android.net.Uri.encode(text)}"
+
+    fun mangaDetail(id: String): String = "manga/$id"
+    fun mangaRead(chapterId: String): String = "manga/read/$chapterId"
 
     val topLevel = setOf(HOME, DISCOVER, LIBRARY, ACTIVITY, SETTINGS)
 }
@@ -145,6 +154,8 @@ private fun AppNavHost(navController: NavHostController, modifier: Modifier = Mo
             HomeScreen(
                 onOpenBook = { navController.navigate(Routes.book(it)) },
                 onOpenDiscover = { navController.navigate(Routes.DISCOVER) },
+                onOpenMangaList = { navController.navigate(Routes.MANGA_LIST) },
+                onOpenManga = { navController.navigate(Routes.mangaDetail(it)) },
             )
         }
         composable(Routes.DISCOVER) {
@@ -159,6 +170,33 @@ private fun AppNavHost(navController: NavHostController, modifier: Modifier = Mo
         composable(Routes.SETTINGS) {
             SettingsScreen(
                 onOpenTranslator = { navController.navigate(Routes.translator()) },
+            )
+        }
+        composable(Routes.MANGA_LIST) {
+            MangaListScreen(
+                onOpenManga = { navController.navigate(Routes.mangaDetail(it)) },
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = Routes.MANGA_DETAIL,
+            arguments = listOf(navArgument("mangaId") { type = NavType.StringType }),
+        ) { entry ->
+            val mangaId = entry.arguments?.getString("mangaId") ?: return@composable
+            MangaDetailScreen(
+                mangaId = mangaId,
+                onBack = { navController.popBackStack() },
+                onReadChapter = { navController.navigate(Routes.mangaRead(it)) },
+            )
+        }
+        composable(
+            route = Routes.MANGA_READ,
+            arguments = listOf(navArgument("chapterId") { type = NavType.StringType }),
+        ) { entry ->
+            val chapterId = entry.arguments?.getString("chapterId") ?: return@composable
+            MangaReaderScreen(
+                chapterId = chapterId,
+                onBack = { navController.popBackStack() },
             )
         }
         composable(

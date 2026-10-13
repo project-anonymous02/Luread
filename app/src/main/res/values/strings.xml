@@ -166,6 +166,7 @@
     <string name="home_children">Cerita anak-anak</string>
     <string name="home_recommendations">Cerita rekomendasi</string>
     <string name="home_knowledge">Buku Pengetahuan</string>
+    <string name="home_manga">Manga (MangaDex)</string>
     <string name="home_recent">Recently added</string>
     <string name="home_empty_subtitle">Add books from Discover, or import your own EPUB/PDF/TXT files.</string>
     <string name="home_stat_library">%1$d in your library</string>
@@ -250,6 +251,13 @@
     <string name="translator_result">Result</string>
     <string name="translator_footer">Hasil terjemahan dari Google Translate (unofficial) dan MyMemory. Kualitas terbaik untuk pasangan bahasa besar; bahasa kecil mungkin kurang akurat.</string>
     <string name="translator_enter_text">Enter some text first.</string>
+
+    <!-- Manga (MangaDex) -->
+    <string name="manga_title">Manga</string>
+    <string name="manga_search_hint">Search manga…</string>
+    <string name="manga_chapters">Chapters (%1$d)</string>
+    <string name="manga_reading">Reading manga</string>
+    <string name="manga_credit">Manga data &amp; images from MangaDex. Please credit scanlation groups.</string>
 
     <!-- Aksesibilitas -->
     <string name="cd_back">Navigate back</string>

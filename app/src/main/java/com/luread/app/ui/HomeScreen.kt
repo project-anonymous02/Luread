@@ -34,13 +34,16 @@ import com.luread.app.ui.components.BookCard
 import com.luread.app.ui.components.BookGridItem
 import com.luread.app.ui.components.BookRowItem
 import com.luread.app.ui.components.toCard
+import com.luread.app.ui.manga.MangaHomeRow
 
 @Composable
 fun HomeScreen(
     onOpenBook: (String) -> Unit,
     onOpenDiscover: () -> Unit,
+    onOpenMangaList: () -> Unit,
+    onOpenManga: (String) -> Unit,
 ) {
-    val vm = appViewModel { HomeViewModel(it.library, it.catalog) }
+    val vm = appViewModel { HomeViewModel(it.library, it.catalog, it.manga) }
     val continueReading by vm.continueReading.collectAsStateWithLifecycle()
     val recent by vm.recent.collectAsStateWithLifecycle()
     val stats by vm.stats.collectAsStateWithLifecycle()
@@ -49,6 +52,7 @@ fun HomeScreen(
     val children by vm.children.collectAsStateWithLifecycle()
     val recommendations by vm.recommendations.collectAsStateWithLifecycle()
     val knowledge by vm.knowledge.collectAsStateWithLifecycle()
+    val mangaState by vm.manga.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -140,6 +144,15 @@ fun HomeScreen(
                 keyPrefix = "know",
                 onOpenBook = onOpenBook,
                 onSeeAll = onOpenDiscover,
+                onRetry = vm::refresh,
+            )
+        }
+
+        item {
+            MangaHomeRow(
+                state = mangaState,
+                onOpenManga = onOpenManga,
+                onSeeAll = onOpenMangaList,
                 onRetry = vm::refresh,
             )
         }

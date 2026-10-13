@@ -5,9 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.luread.app.data.network.CatalogQuery
 import com.luread.app.data.catalog.CatalogRepository
 import com.luread.app.data.library.LibraryRepository
+import com.luread.app.data.manga.MangaRepository
 import com.luread.app.data.network.ApiResult
 import com.luread.app.ui.components.BookCard
 import com.luread.app.ui.components.toCard
+import com.luread.app.ui.manga.MangaListUi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +26,7 @@ import kotlinx.coroutines.launch
 class HomeViewModel(
     private val library: LibraryRepository,
     private val catalog: CatalogRepository,
+    private val manga: MangaRepository,
 ) : ViewModel() {
 
     val continueReading: StateFlow<List<BookCard>> = library.observeLibrary()
@@ -60,6 +63,9 @@ class HomeViewModel(
     private val _knowledge = MutableStateFlow<CatalogUiState>(CatalogUiState.Loading)
     val knowledge: StateFlow<CatalogUiState> = _knowledge
 
+    private val _manga = MutableStateFlow<MangaListUi>(MangaListUi.Loading)
+    val manga: StateFlow<MangaListUi> = _manga
+
     init {
         refresh()
     }
@@ -70,6 +76,7 @@ class HomeViewModel(
         _children.value = CatalogUiState.Loading
         _recommendations.value = CatalogUiState.Loading
         _knowledge.value = CatalogUiState.Loading
+        _manga.value = MangaListUi.Loading
         viewModelScope.launch {
             // Featured: Gutenberg populer (browse default).
             when (val result = catalog.firstPage(CatalogQuery())) {
@@ -123,6 +130,13 @@ class HomeViewModel(
             ) {
                 is ApiResult.Success -> _knowledge.value = CatalogUiState.Content(result.value)
                 is ApiResult.Failure -> _knowledge.value = CatalogUiState.Error(result.error.toUserMessage())
+            }
+        }
+        viewModelScope.launch {
+            // Manga populer dari MangaDex (tanpa key).
+            when (val result = manga.popular()) {
+                is ApiResult.Success -> _manga.value = MangaListUi.Content(result.value.results)
+                is ApiResult.Failure -> _manga.value = MangaListUi.Error(result.error.toUserMessage())
             }
         }
     }
