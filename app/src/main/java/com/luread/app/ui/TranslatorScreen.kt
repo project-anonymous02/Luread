@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luread.app.R
 import com.luread.app.core.design.LureadSpace.Lg
 import com.luread.app.core.design.LureadSpace.SectionGap
@@ -46,13 +47,16 @@ fun TranslatorScreen(initialText: String?, onBack: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val app = context.applicationContext as android.app.Application
-    val translator = remember { (app as com.luread.app.LureadApp).container.translator }
+    val container = remember { (app as com.luread.app.LureadApp).container }
+    val translator = remember { container.translator }
+    val savedLang by container.settings.settings
+        .collectAsStateWithLifecycle(initialValue = com.luread.app.data.settings.UserSettings())
 
     var text by rememberSaveable { mutableStateOf(initialText.orEmpty()) }
     var result by rememberSaveable { mutableStateOf("") }
     var status by rememberSaveable { mutableStateOf("") }
     var loading by rememberSaveable { mutableStateOf(false) }
-    var targetLang by rememberSaveable { mutableStateOf("id") }
+    var targetLang by rememberSaveable { mutableStateOf(savedLang.defaultTranslateLanguage) }
 
     fun doTranslate() {
         if (text.isBlank()) {
@@ -113,6 +117,7 @@ fun TranslatorScreen(initialText: String?, onBack: () -> Unit) {
                 TargetChip("id", "Indonesia", targetLang) { targetLang = it }
                 TargetChip("en", "English", targetLang) { targetLang = it }
                 TargetChip("ms", "Melayu", targetLang) { targetLang = it }
+                TargetChip("ja", "日本語", targetLang) { targetLang = it }
                 TargetChip("ar", "العربية", targetLang) { targetLang = it }
             }
 

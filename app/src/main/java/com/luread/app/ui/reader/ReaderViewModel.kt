@@ -180,7 +180,7 @@ class ReaderViewModel(
         _translate.value = TranslateUi.Loading
         viewModelScope.launch {
             // Target: bahasa Indonesia (default app); bisa dikembangkan jadi preferensi.
-            val target = "id"
+            val target = settings.value.defaultTranslateLanguage.ifBlank { "id" }
             when (val outcome = container.translator.translate(capped, "auto", target)) {
                 is com.luread.app.data.translate.TranslationService.Outcome.Success -> {
                     _translate.value = TranslateUi.Done(
