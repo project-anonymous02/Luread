@@ -6,9 +6,7 @@ package com.luread.app.data.catalog
  * Setiap sumber memakai kunci komposit `id:remote-id`:
  *  * `gutenberg:1342`            -> Project Gutenberg lewat Gutendex;
  *  * `openlibrary:OL66554W`      -> Open Library (ID karya tanpa `/works/`);
- *  * `archive:prideprejudice..`  -> Internet Archive (identifier item);
- *  * `wikisource:33610`          -> Wikisource berbahasa Indonesia (pageid);
- *  * `wikibooks:24258`           -> Wikibooks berbahasa Indonesia (pageid).
+ *  * `archive:prideprejudice..`  -> Internet Archive (identifier item).
  *
  * Kunci pernah mengandung `/` tidak diizinkan karena nama berkas unduhan
  * dibentuk dari kunci (lihat DownloadManager.safeName).
@@ -16,9 +14,7 @@ package com.luread.app.data.catalog
 enum class BookSource(val id: String) {
     GUTENDEX("gutenberg"),
     OPEN_LIBRARY("openlibrary"),
-    INTERNET_ARCHIVE("archive"),
-    WIKISOURCE("wikisource"),
-    WIKIBOOKS("wikibooks");
+    INTERNET_ARCHIVE("archive");
 
     val prefix: String
         get() = "$id:"

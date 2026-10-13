@@ -2,7 +2,6 @@ package com.luread.app.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.luread.app.data.catalog.BookSource
 import com.luread.app.data.catalog.CatalogItem
 import com.luread.app.data.catalog.CatalogRepository
 import com.luread.app.data.catalog.Formats
@@ -48,12 +47,9 @@ data class BookDetailUi(
  *  * snapshot lokal bila buku sudah masuk perpustakaan (jalan offline);
  *  * `CatalogRepository.fetchDetail(key)` bila belum — per sumber:
  *    Gutenberg `ids=`, Open Library karya+edisi+metadata IA,
- *    Internet Archive `metadata/`, Wikisource `action=parse`;
+ *    Internet Archive `metadata/`;
  *  * kegagalan katalog pada buku yang sudah tersimpan lokal tetap menampilkan
  *    layar dengan data snapshot.
- *
- * Wikisource: payload HTML dari `action=parse` disimpan sementara dan
- * ditulis lokal oleh [DownloadManager.enqueueText] saat pengguna mengunduh.
  */
 class BookDetailViewModel(
     private val bookId: String,
@@ -62,9 +58,7 @@ class BookDetailViewModel(
     private val downloads: DownloadManager,
 ) : ViewModel() {
 
-    private val source: BookSource = BookSource.fromKey(bookId)
     private val catalogBook = MutableStateFlow<CatalogItem?>(null)
-    private val catalogPayload = MutableStateFlow<String?>(null)
     private val catalogError = MutableStateFlow<String?>(null)
     private val catalogLoading = MutableStateFlow(false)
 
@@ -105,7 +99,6 @@ class BookDetailViewModel(
             when (val result = catalog.fetchDetail(bookId)) {
                 is ApiResult.Success -> {
                     catalogBook.value = result.value.item
-                    catalogPayload.value = result.value.payload
                     catalogError.value = null
                 }
                 is ApiResult.Failure -> {
@@ -136,10 +129,6 @@ class BookDetailViewModel(
 
     fun download() {
         val remote = catalogBook.value
-        if (source == BookSource.WIKISOURCE) {
-            downloadWikisource(remote)
-            return
-        }
         val url = libraryBook.value?.sourceUrl
             ?: remote?.let { item ->
                 Formats.bestReadable(item.formats)?.let { readable ->
@@ -152,40 +141,6 @@ class BookDetailViewModel(
         val mime = libraryBook.value?.contentType
             ?: remote?.let { Formats.bestReadable(it.formats)?.mime }
         downloads.enqueue(bookId, url, mime)
-        if (libraryBook.value == null && remote != null) {
-            viewModelScope.launch { library.addFromCatalog(remote) }
-        }
-    }
-
-    /**
-     * Wikisource: artikel sudah berupa HTML dari `action=parse`; bila payload
-     * belum ada (mis. setelah refresh), ambil ulang detail dulu.
-     */
-    private fun downloadWikisource(remote: CatalogItem?) {
-        val payload = catalogPayload.value
-        if (payload != null) {
-            finishWikisourceDownload(payload, remote)
-            return
-        }
-        viewModelScope.launch {
-            when (val result = catalog.fetchDetail(bookId)) {
-                is ApiResult.Success -> {
-                    catalogBook.value = result.value.item
-                    catalogPayload.value = result.value.payload
-                    val html = result.value.payload
-                    if (html != null) finishWikisourceDownload(html, result.value.item)
-                }
-                is ApiResult.Failure -> {
-                    if (libraryBook.value == null) {
-                        catalogError.value = result.error.toUserMessage()
-                    }
-                }
-            }
-        }
-    }
-
-    private fun finishWikisourceDownload(html: String, remote: CatalogItem?) {
-        downloads.enqueueText(bookId, html, Formats.MIME_HTML)
         if (libraryBook.value == null && remote != null) {
             viewModelScope.launch { library.addFromCatalog(remote) }
         }

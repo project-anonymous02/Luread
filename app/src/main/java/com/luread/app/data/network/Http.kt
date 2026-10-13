@@ -9,8 +9,8 @@ import kotlinx.serialization.json.Json
 
 /** Konfigurasi jaringan yang bisa diubah dari Settings. */
 data class HttpConfig(
-    val requestTimeoutMs: Long = 20_000L,
-    val connectTimeoutMs: Long = 10_000L,
+    val requestTimeoutMs: Long = 30_000L,
+    val connectTimeoutMs: Long = 15_000L,
 )
 
 /**

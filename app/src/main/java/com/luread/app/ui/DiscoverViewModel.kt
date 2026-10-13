@@ -25,8 +25,7 @@ import kotlinx.coroutines.launch
  *    children/poetry, mime epub/html (mime text/plain sengaja tidak ditawarkan
  *    karena teramati membalas 503);
  *  * Open Library & Internet Archive: languages (kode ISO 639-2) — topic dan
- *    format tidak didukung pencarian keduanya sehingga barisnya disembunyikan;
- *  * Wikisource id: pencarian teks saja (semua konten berbahasa Indonesia).
+ *    format tidak didukung pencarian keduanya sehingga barisnya disembunyikan.
  */
 class DiscoverViewModel(
     @Suppress("unused") private val library: LibraryRepository,

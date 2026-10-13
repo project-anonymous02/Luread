@@ -7,7 +7,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,7 +50,7 @@ fun TextPager(
         state = pagerState,
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(Color.White),
         pageSpacing = 8.dp,
     ) { index ->
         // Halaman yang sedang tidak terlihat tidak perlu digambar.
@@ -61,7 +60,7 @@ fun TextPager(
                 fontSize = fontSp.sp,
                 lineHeight = (fontSp * 1.6f).sp,
                 fontFamily = FontFamily.Serif,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = Color.Black,
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())

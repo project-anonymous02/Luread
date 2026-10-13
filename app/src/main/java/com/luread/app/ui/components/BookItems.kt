@@ -13,10 +13,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.luread.app.R
 import com.luread.app.core.design.BookCover
 import com.luread.app.core.design.LocalLureadExtras
 import com.luread.app.core.design.LureadSpace.Sm
@@ -59,13 +57,15 @@ fun BookGridItem(card: BookCard, onClick: () -> Unit, modifier: Modifier = Modif
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(top = 6.dp),
         )
-        Text(
-            text = card.authorsText.ifBlank { stringResource(R.string.common_unknown_author) },
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        if (card.authorsText.isNotBlank()) {
+            Text(
+                text = card.authorsText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 
@@ -102,13 +102,15 @@ fun BookRowItem(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            Text(
-                text = card.authorsText.ifBlank { stringResource(R.string.common_unknown_author) },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            if (card.authorsText.isNotBlank()) {
+                Text(
+                    text = card.authorsText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
             if (card.progress > 0f) {
                 Text(
                     text = Format.percent(card.progress),

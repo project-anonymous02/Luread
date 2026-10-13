@@ -10,7 +10,6 @@ import com.luread.app.data.network.ArchiveApi
 import com.luread.app.data.network.GutendexApi
 import com.luread.app.data.network.HttpConfig
 import com.luread.app.data.network.OpenLibraryApi
-import com.luread.app.data.network.WikisourceApi
 import com.luread.app.data.network.createHttpClient
 import com.luread.app.data.settings.SettingsRepository
 import com.luread.app.data.settings.settingsDataStore
@@ -39,8 +38,6 @@ class AppContainer(context: Context) {
             gutendex = GutendexApi(httpClient),
             openLibrary = OpenLibraryApi(httpClient),
             archive = ArchiveApi(httpClient),
-            wikisource = WikisourceApi(httpClient),
-            wikibooks = WikisourceApi(httpClient, baseUrl = WikisourceApi.WIKIBOOKS_BASE_URL),
         )
     }
 

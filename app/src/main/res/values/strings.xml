@@ -57,8 +57,6 @@
     <string name="filter_source_gutenberg">Gutenberg</string>
     <string name="filter_source_openlibrary">Open Library</string>
     <string name="filter_source_archive">Internet Archive</string>
-    <string name="filter_source_wikisource">Wikisource</string>
-    <string name="filter_source_wikibooks">Wikibooks</string>
     <string name="library_empty_title">Library is empty</string>
     <string name="library_empty_subtitle">No books match this filter. Add some from Discover or import your own files.</string>
     <string name="library_count">%1$d books</string>
@@ -67,7 +65,6 @@
     <string name="library_filter_finished">Finished</string>
     <string name="library_filter_favorite">Favorites</string>
     <string name="untitled">Untitled</string>
-    <string name="common_unknown_author">Unknown author</string>
 
     <!-- Impor file -->
     <string name="import_error_open">The file could not be opened.</string>
@@ -84,7 +81,7 @@
     <string name="activity_history">Session history</string>
 
     <!-- Home -->
-    <string name="home_tagline">Gutenberg, Open Library, Internet Archive, Wikisource, Wikibooks — no account, works offline.</string>
+    <string name="home_tagline">Gutenberg, Open Library, Internet Archive — no account, works offline.</string>
     <string name="home_continue">Continue reading</string>
     <string name="home_featured">Featured from the catalogue</string>
     <string name="home_indonesian">Cerita &amp; Buku Indonesia</string>
@@ -158,7 +155,7 @@
     <string name="settings_font_size">Text size: %1$d sp</string>
     <string name="settings_version">Luread 0.1.0</string>
     <string name="settings_about_title">Tentang Luread</string>
-    <string name="settings_about_body">Luread adalah aplikasi pembaca buku gratis tanpa akun, tanpa iklan, tanpa langganan. Buku diambil dari sumber-sumber publik gratis: Project Gutenberg (Gutendex), Open Library, Internet Archive, Wikisource Indonesia, dan Wikibooks Indonesia. Semua buku, catatan, penanda, dan statistik baca tetap tersimpan di perangkatmu; tidak ada data yang dikirim ke server mana pun kecuali saat mengunduh buku atau menerjemahkan teks.</string>
+    <string name="settings_about_body">Luread adalah aplikasi pembaca buku gratis tanpa akun, tanpa iklan, tanpa langganan. Buku diambil dari sumber-sumber publik gratis: Project Gutenberg (Gutendex), Open Library, dan Internet Archive. Semua buku, catatan, penanda, dan statistik baca tetap tersimpan di perangkatmu; tidak ada data yang dikirim ke server mana pun kecuali saat mengunduh buku atau menerjemahkan teks.</string>
     <string name="settings_about_sources">Fitur: baca EPUB, PDF, HTML, TXT, CBZ (komik); impor file lokal; terjemahan otomatis multi-provider; katalog multi-sumber dengan pencarian &amp; filter; mode gelap; penanda &amp; sorotan; statistik baca.</string>
     <string name="settings_about_credits">Made by Nata — Pengganti PerpusKita (yang bukunya dikit, hehe).</string>
 

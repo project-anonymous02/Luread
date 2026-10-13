@@ -4,7 +4,7 @@ package com.luread.app.core.util
  * Konversi HTML menjadi teks polos untuk ringkasan dan simpanan baca.
  *
  * Fungsi murni tanpa Android sehingga bisa diuji unit test. Dipakai untuk:
- *  * merangkum artikel Wikisource pada layar detail (ringkasan singkat);
+ *  * merangkum artikel HTML pada layar detail (ringkasan singkat);
  *  * (perentalah) kebutuhan lain yang memerlukan teks dari HTML.
  */
 object HtmlStrip {

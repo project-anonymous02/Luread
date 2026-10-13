@@ -6,7 +6,7 @@ import com.luread.app.data.network.GutendexBook
  * Item katalog seragam untuk semua sumber.
  *
  * Layar Discover/Detail hanya mengenal model ini; mapper per-sumber
- * (Gutendex, Open Library, Internet Archive, Wikisource) mengisinya di
+ * (Gutendex, Open Library, Internet Archive) mengisinya di
  * lapisan jaringan.
  *
  * [formats] mengikuti konvensi Gutendex: map MIME -> URL unduhan. Gutenberg

@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.luread.app.AppContainer
 import com.luread.app.R
-import com.luread.app.core.design.ThemeMode
 import com.luread.app.data.catalog.Formats
 import com.luread.app.data.db.AnnotationEntity
 import com.luread.app.data.db.BookEntity
@@ -165,6 +164,10 @@ class ReaderViewModel(
     /**
      * Terjemahkan [text] secara inline memakai TranslationService (failover
      * Google gtx -> MyMemory). Hasil ditampilkan lewat [translate].
+     *
+     * Teks dipotong ke [MAX_TRANSLATE_CHARS] karakter agar translate-select-all
+     * pada bab panjang tidak bikin UI lag (Compose Text ratusan ribu karakter
+     * sangat berat). Sisa teks diberi tanda "…".
      */
     fun translateInline(text: String) {
         if (text.isBlank()) {
@@ -173,14 +176,15 @@ class ReaderViewModel(
             )
             return
         }
+        val capped = text.take(MAX_TRANSLATE_CHARS)
         _translate.value = TranslateUi.Loading
         viewModelScope.launch {
             // Target: bahasa Indonesia (default app); bisa dikembangkan jadi preferensi.
             val target = "id"
-            when (val outcome = container.translator.translate(text, "auto", target)) {
+            when (val outcome = container.translator.translate(capped, "auto", target)) {
                 is com.luread.app.data.translate.TranslationService.Outcome.Success -> {
                     _translate.value = TranslateUi.Done(
-                        original = text,
+                        original = capped,
                         translated = outcome.result.translatedText,
                         lang = outcome.result.detectedSourceLang,
                     )
@@ -225,7 +229,6 @@ class ReaderViewModel(
         _epub.value = EpubUi.Loading
         val app: Application = container.appContext as Application
         val prefs = readerPreferences(
-            dark = settings.value.themeMode == ThemeMode.DARK,
             fontSp = settings.value.clampedFontSize,
         )
         withContext(Dispatchers.IO) {
@@ -337,12 +340,12 @@ class ReaderViewModel(
     private val _cbzImages = MutableStateFlow<List<String>>(emptyList())
     val cbzImages: StateFlow<List<String>> = _cbzImages.asStateFlow()
 
-    private fun readerPreferences(dark: Boolean, fontSp: Float): ReflowableWebPreferences {
-        val base = if (dark) {
-            ReflowableWebPreferences.DarkTheme
-        } else {
-            ReflowableWebPreferences.LightTheme
-        }
+    private fun readerPreferences(fontSp: Float): ReflowableWebPreferences {
+        // Latar belakang baca DIPAKSA putih (terang) — permintaan mutlak user.
+        // `overridePublisherColors = true` memaksa warna teks/latar dari
+        // preferensi ini mengalahkan gaya bawaan publisher (banyak EPUB
+        // Gutenberg punya latar gelap).
+        val base = ReflowableWebPreferences.LightTheme
         return base.copy(
             scroll = true,
             fontSize = (fontSp / 16.0).coerceIn(0.75, 2.5),
@@ -496,6 +499,9 @@ class ReaderViewModel(
     class ReaderException(message: String) : Exception(message)
 
     companion object {
+        /** Batas karakter teks yang dikirim ke penerjemah agar UI tidak lag. */
+        const val MAX_TRANSLATE_CHARS = 4000
+
         fun decodeLocation(json: String?): SavedLocation? = LocationCodec.decode(json)
 
         fun encodeLocation(location: SavedLocation): String = LocationCodec.encode(location)

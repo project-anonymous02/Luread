@@ -63,8 +63,13 @@ class HomeViewModel(
                 is ApiResult.Success -> _featured.value = CatalogUiState.Content(result.value)
                 is ApiResult.Failure -> _featured.value = CatalogUiState.Error(result.error.toUserMessage())
             }
-            // Section Indonesia: Wikisource (semua konten berbahasa Indonesia)
-            when (val result = catalog.firstPage(CatalogQuery(), source = com.luread.app.data.catalog.BookSource.WIKISOURCE)) {
+            // Section Indonesia: Open Library (language=ind, ISO 639-2).
+            when (
+                val result = catalog.firstPage(
+                    CatalogQuery(languages = listOf("id")),
+                    source = com.luread.app.data.catalog.BookSource.OPEN_LIBRARY,
+                )
+            ) {
                 is ApiResult.Success -> _indonesian.value = CatalogUiState.Content(result.value)
                 is ApiResult.Failure -> _indonesian.value = CatalogUiState.Error(result.error.toUserMessage())
             }

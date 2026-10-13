@@ -4,18 +4,19 @@ import android.annotation.SuppressLint
 import android.graphics.Color as AndroidColor
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import java.io.File
 
 /**
  * Pembaca HTML tunggal (misal hasil unduhan `text/html` dari Gutenberg).
@@ -23,6 +24,10 @@ import kotlinx.coroutines.isActive
  * File dibuka lewat WebView lokal dengan JavaScript dimatikan dan hanya
  * berkas di perangkat — tidak ada permintaan jaringan dari pembaca ini.
  * Progres dipantau dari posisi scroll halaman.
+ *
+ * Latar belakang DIPAKSA putih dan teks hitam (CSS di-suntikkan) karena
+ * banyak file HTML Gutenberg punya latar gelap yang membuat teks hitam
+ * tidak terbaca.
  */
 @Composable
 fun HtmlReader(
@@ -32,7 +37,6 @@ fun HtmlReader(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val background = MaterialTheme.colorScheme.background
 
     val webView = remember(path) {
         @SuppressLint("SetJavaScriptEnabled")
@@ -43,9 +47,12 @@ fun HtmlReader(
             settings.builtInZoomControls = true
             settings.displayZoomControls = false
             isHorizontalScrollBarEnabled = false
-            setBackgroundColor(AndroidColor.TRANSPARENT)
+            setBackgroundColor(AndroidColor.WHITE)
             webViewClient = WebViewClient()
-            loadUrl("file://$path")
+            val file = File(path)
+            val raw = runCatching { file.readText() }.getOrDefault("")
+            val html = injectWhiteCss(raw)
+            loadDataWithBaseURL("file://${file.parent}/", html, "text/html", "utf-8", null)
         }
     }
 
@@ -56,10 +63,12 @@ fun HtmlReader(
     AndroidView(
         factory = { webView },
         update = { view ->
-            view.setBackgroundColor(background.toArgb())
+            view.setBackgroundColor(AndroidColor.WHITE)
         },
         onRelease = { view -> runCatching { view.destroy() } },
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.White),
     )
 
     LaunchedEffect(webView, fontSp) {
@@ -72,6 +81,41 @@ fun HtmlReader(
             }
         }
     }
+}
+
+/** Suntikkan CSS paksa putih/ hitam ke dokumen HTML. */
+internal fun injectWhiteCss(html: String): String {
+    val css = """
+        <style id="luread-white">
+        html, body { background: #FFFFFF !important; color: #000000 !important; }
+        body, p, div, span, td, li, blockquote, pre, code, em, strong, i, b,
+        h1, h2, h3, h4, h5, h6, a, article, section, main, header, footer,
+        figure, figcaption, caption, label, dt, dd, small, sub, sup {
+            color: #000000 !important;
+            background-color: transparent !important;
+        }
+        a { color: #1155CC !important; text-decoration: underline; }
+        table, th, tr { background: transparent !important; color: #000000 !important; border-color: #CCCCCC !important; }
+        hr { border-color: #CCCCCC !important; }
+        img { max-width: 100%; height: auto; }
+        </style>
+    """.trimIndent()
+    val lower = html.lowercase()
+    val headIdx = lower.indexOf("<head")
+    if (headIdx >= 0) {
+        val closeIdx = lower.indexOf('>', headIdx)
+        if (closeIdx >= 0) {
+            return html.substring(0, closeIdx + 1) + css + html.substring(closeIdx + 1)
+        }
+    }
+    val htmlIdx = lower.indexOf("<html")
+    if (htmlIdx >= 0) {
+        val closeIdx = lower.indexOf('>', htmlIdx)
+        if (closeIdx >= 0) {
+            return html.substring(0, closeIdx + 1) + "<head>" + css + "</head>" + html.substring(closeIdx + 1)
+        }
+    }
+    return css + html
 }
 
 private const val SCROLL_PROGRESS_JS =

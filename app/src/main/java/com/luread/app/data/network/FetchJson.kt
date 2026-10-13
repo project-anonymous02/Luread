@@ -15,8 +15,8 @@ import java.net.SocketTimeoutException
 
 /**
  * Ambil URL dan dekode JSON-nya dengan pemetaan galat yang sama seperti
- * GutendexApi (dipakai bersama oleh Open Library, Internet Archive, dan
- * Wikisource supaya lapisan katalog tidak perlu tahu perbedaannya).
+ * GutendexApi (dipakai bersama oleh Open Library dan Internet Archive
+ * supaya lapisan katalog tidak perlu tahu perbedaannya).
  *
  * Kebijakan status:
  *  * status tidak 2xx -> [ApiError.Http] (badan disingkat untuk pesan);

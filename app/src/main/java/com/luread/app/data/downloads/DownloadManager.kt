@@ -85,9 +85,8 @@ class DownloadManager(
     }
 
     /**
-     * Simpan teks/HTML hasil fetch aplikasi (mis. artikel Wikisource dari
-     * `action=parse`) sebagai berkas baca, dengan sikap progres/gagal yang
-     * sama seperti unduhan biasa.
+     * Simpan teks/HTML hasil fetch aplikasi sebagai berkas baca, dengan
+     * sikap progres/gagal yang sama seperti unduhan biasa.
      */
     @Synchronized
     fun enqueueText(bookId: String, text: String, mime: String) {

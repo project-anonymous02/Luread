@@ -87,14 +87,12 @@ fun DiscoverScreen(onOpenBook: (String) -> Unit) {
                 if (picked != null) vm.setSource(picked)
             },
         )
-        if (filters.source != BookSource.WIKISOURCE && filters.source != BookSource.WIKIBOOKS) {
-            FilterRow(
-                label = stringResource(R.string.filter_language),
-                options = languageOptions,
-                selected = filters.language,
-                onSelect = vm::setLanguage,
-            )
-        }
+        FilterRow(
+            label = stringResource(R.string.filter_language),
+            options = languageOptions,
+            selected = filters.language,
+            onSelect = vm::setLanguage,
+        )
         if (filters.source == BookSource.GUTENDEX) {
             FilterRow(
                 label = stringResource(R.string.filter_topic),
@@ -166,8 +164,6 @@ private val sourceOptions = listOf(
     ChipOption(BookSource.GUTENDEX.id, R.string.filter_source_gutenberg),
     ChipOption(BookSource.OPEN_LIBRARY.id, R.string.filter_source_openlibrary),
     ChipOption(BookSource.INTERNET_ARCHIVE.id, R.string.filter_source_archive),
-    ChipOption(BookSource.WIKISOURCE.id, R.string.filter_source_wikisource),
-    ChipOption(BookSource.WIKIBOOKS.id, R.string.filter_source_wikibooks),
 )
 
 private val languageOptions = listOf(
