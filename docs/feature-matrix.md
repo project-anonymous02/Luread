@@ -1,7 +1,7 @@
 # Feature Matrix — Luread
 
-Tanggal: 12 Oktober 2026. Status mengikuti definisi di `docs/research.md`.
-Paling penting: **"Implemented" ≠ "Tested"**. Satu-satunya hal yang benar-benar *Tested* adalah unit test yang dijalankan CI (lihat `testing.md`) dan pemeriksaan statis lokal. Tidak ada fitur yang diuji pada perangkat.
+Tanggal: 13 Oktober 2026. Status mengikuti definisi di `docs/research.md`.
+Paling penting: **"Implemented" ≠ "Tested"**. *Tested* = unit test lulus di CI (35/35, run `38326003012`) + pemeriksaan statis + **kompilasi sukses di CI**. Tidak ada fitur yang diuji pada perangkat; jalur runtime (Readium/PDF/WebView/unduhan) tetap *Implemented, Not Tested on device* meski kompilasi terverifikasi.
 
 Legenda: `V` Verified (sumber/audit), `I` Implemented (kode ada), `IT` Implemented-Not-Tested, `P` Planned (belum dibuat), `—` tidak berlaku.
 
@@ -60,7 +60,7 @@ Legenda: `V` Verified (sumber/audit), `I` Implemented (kode ada), `IT` Implement
 
 | Fitur | Status | Catatan |
 | --- | --- | --- |
-| EPUB 2/3 via Readium 3.4.0 | IT | Kode lengkap (`ReaderViewModel`, `EpubContent`); **belum pernah dikompilasi/dijalankan** |
+| EPUB 2/3 via Readium 3.4.0 | IT | Kode lengkap (`ReaderViewModel`, `EpubContent`); **kompilasi terverifikasi di CI**, runtime belum diuji di perangkat |
 | PDF via `PdfRenderer` | IT | Render per halaman; **tanpa seleksi teks** (memang tidak ditampilkan aksi seleksi untuk PDF) |
 | TXT (paginasi internal, cap 4 MB) | IT | Unit test untuk paginasinya *Tested* di CI |
 | HTML lokal (WebView, JS mati) | IT | |
@@ -138,8 +138,8 @@ Penting: waktu hanya dihitung ketika sesi benar-benar diamati aplikasi (masuk re
 | Item | Status |
 | --- | --- |
 | Gradle wrapper resmi 9.6.0 | V (file dari tag resmi; dicek `verify.py`) |
-| Workflow CI (push/PR/manual), unit test, assembleDebug, upload artifact | I (belum pernah berjalan di GitHub Actions dari sesi ini) |
-| Unit test (parsing, format, paginasi TXT, codec lokasi, URL, pesan error) | IT→V setelah CI pertama berhasil |
+| Workflow CI (push/PR/manual), unit test, assembleDebug, upload artifact | V (hijau di run `38326003012`) |
+| Unit test (parsing, format, paginasi TXT, codec lokasi, URL, pesan error) | V (35/35 lulus di CI) |
 | AndroidTest / instrumentasi | **Tidak dibuat** (keputusan eksplisit: tidak ada emulator; folder sengaja tidak dibuat kosong) |
 | Logo resmi | I | `image/logo.png` (isi JPEG 512×512) divalidasi magic byte oleh `:app:integrateLogo`, disalin ke `res/drawable-nodpi/logo.*`, dipakai sebagai `android:icon`. Build gagal bila file hilang/rusak |
 | R8/ProGuard release | Dinonaktifkan sengaja (belum terverifikasi) |

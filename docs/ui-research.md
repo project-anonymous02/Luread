@@ -56,6 +56,6 @@ Semua layar memakai satu sistem di `core/design/`:
 
 ## 7. Yang tidak diverifikasi
 
-* Tampilan nyata di layar (portrait/landscape, tablet, dark mode) — **belum pernah dijalankan**.
+* Tampilan nyata di layar (portrait/landscape, tablet, dark mode) — **belum pernah dijalankan di perangkat** (kompilasi & unit test lulus di CI; lihat `testing.md`).
 * Kontras warna terhadap WCAG dihitung secara otomatis — baru dipilih secara manual.
 * Perilaku font sistem / Dynamic Type ekstrem.

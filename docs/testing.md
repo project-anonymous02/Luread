@@ -1,19 +1,19 @@
 # Pengujian & Status Verifikasi — Luread
 
-Tanggal: 12 Oktober 2026.
+Tanggal: 13 Oktober 2026.
 
 ## 1. Ringkasan jujur
 
 | Aktivitas | Status |
 | --- | --- |
 | Pemeriksaan statis lokal (`scripts/verify.py`) | **Dijalankan, lolos: 0 masalah, 0 peringatan** |
-| Kompilasi Kotlin / `assembleDebug` | **Tidak bisa dijalankan di lingkungan ini** (tanpa JDK & Android SDK) |
-| Unit test (`./gradlew testDebugUnitTest`) | **Belum dijalankan** — targetnya adalah CI |
-| Lint Android (`./gradlew lint`) | **Tidak dijalankan** (tidak ada SDK lokal; belum ditambahkan ke CI) |
+| Kompilasi Kotlin / `assembleDebug` | **Lulus di CI** (run `38326003012`, commit `1dcdba8`) |
+| Unit test (`./gradlew testDebugUnitTest`) | **Lulus di CI: 35/35** |
+| Lint Android (`./gradlew lint`) | **Tidak dijalankan** (belum ditambahkan ke CI) |
 | Uji di perangkat/emulator | **Tidak ada** perangkat/emulator di lingkungan ini |
-| GitHub Actions pertama | **Belum dijalankan** dari sesi pengembangan ini |
+| GitHub Actions | **Hijau** — static-checks + Unit tests sukses; artifact `luread-debug-apk` (~33 MB) & `test-reports` terbit |
 
-Konsekuensi: tidak ada klaim "aplikasi sudah jalan" yang bisa dibuat saat ini. Kode berstatus **Implemented, Not Tested** kecuali yang tertulis lain.
+Konsekuensi: kompilasi, resource, Room KSP, Readium API, dan unit test terverifikasi di CI. Klaim "aplikasi berjalan dengan benar di perangkat" tetap tidak bisa dibuat.
 
 ## 2. Mengapa build lokal tidak mungkin (fakta, bukan asumsi)
 
@@ -26,7 +26,7 @@ Konsekuensi: tidak ada klaim "aplikasi sudah jalan" yang bisa dibuat saat ini. K
 `python3 scripts/verify.py` memeriksa:
 
 1. `gradle/libs.versions.toml` valid (tomllib) dan setiap aksesur `libs.*` yang dirujuk skrip Gradle ada.
-2. `AndroidManifest.xml` & file res valid XML; tanpa `android:icon` (logo resmi belum ada); `INTERNET` + `WAKE_LOCK`; `<queries>` untuk `ACTION_PROCESS_TEXT`.
+2. `AndroidManifest.xml` & file res valid XML; `android:icon="@drawable/logo"` (wajib; logo divalidasi magic byte PNG/JPEG); `INTERNET` + `WAKE_LOCK`; `<queries>` untuk `ACTION_PROCESS_TEXT`.
 3. Setiap `R.string.X` yang dipakai kode ada di `strings.xml`, dan sebaliknya (peringatan bila ada yang tidak terpakai).
 4. Setiap file Kotlin: package cocok dengan direktori; kurung `{} () []` seimbang setelah komentar/string dibuang (scanner satu-pass, menghormati string yang memuat `//`).
 5. Tidak ada pola sintaks rusak `.androidx.`.
@@ -35,9 +35,9 @@ Konsekuensi: tidak ada klaim "aplikasi sudah jalan" yang bisa dibuat saat ini. K
 
 Hasil terakhir: **Lolos: 0 masalah, 0 peringatan.**
 
-> Pemeriksaan ini **bukan** pengganti kompilasi. Ia hanya menangkap kelas kesalahan tertentu (resource hilang, struktur file rusak, referensi versi salah).
+> Pemeriksaan ini **bukan** pengganti kompilasi (kompilasi dijalankan CI); ia menangkap kelas kesalahan tertentu lebih cepat.
 
-## 4. Unit test yang ditulis (target: CI)
+## 4. Unit test yang ditulis — semua lulus di CI (35/35)
 
 | Berkas | Yang diuji |
 | --- | --- |
@@ -61,20 +61,26 @@ Pemicu: push (semua cabang), pull request, `workflow_dispatch`. Permission `cont
 
 Catatan: file wrapper adalah **file resmi Gradle** dari tag `v9.6.0` (`gradlew`, `gradlew.bat`, `gradle-wrapper.jar`), bukan file yang dibuat manual.
 
+Riwayat perbaikan CI (3 run pertama gagal, keempat hijau):
+
+1. `checkDebugAarMetadata`: Readium 3.4.0 & navigation-compose 2.10.2 menuntut **compileSdk ≥ 37** → `compileSdk = 37` + **core library desugaring** (`desugar_jdk_libs 2.1.5`).
+2. `sdkmanager "platforms;android-37"` tidak dikenali runner → dihapus, andalkan auto-download AGP.
+3. Kesalahan kompilasi Kotlin: `CatalogQuery` salah paket, enum `Formats` membayangi konstanta MIME, `ContentType.Json` tidak ada di Ktor 3 (→ `ContentType.Application.Json`), properti timeout Ktor 3.6 (`requestTimeoutMillis`), `followRedirects` internal di OkHttp 5, `textZoom` ada di `settings`, ikon Compose butuh import.
+4. 4 unit test gagal (asumsi bahasa Indonesia setelah i18n + pembulatan byte) → diperbaiki; run ke-4 **hijau penuh**.
+
 ## 6. Yang belum diuji (daftar terbuka)
 
-* Kompilasi seluruh kode, khususnya jalur Readium (`ReaderViewModel`, `EpubContent`) dan Room (KSP).
-* Perilaku runtime: membuka EPUB sungguhan, render PDF, WebView HTML, unduhan, impor SAF.
+* Perilaku runtime: membuka EPUB sungguhan, render PDF, WebView HTML, unduhan, impor SAF — **belum diuji di perangkat/emulator mana pun**.
 * `ACTION_PROCESS_TEXT` pada perangkat dengan/tanpa aplikasi penerjemah (lihat `translation-integration.md`).
 * Dark mode, font scaling ekstrem, tablet, TalkBack, rotasi, proses dibunuh sistem.
 * `lint` Android.
 
-Bila CI gagal: perbaiki berdasarkan log CI (artifact `test-reports` + console), jalankan ulang. Jangan menganggap APK ada sebelum log menunjukkan `assembleDebug` sukses dan artifact terunduh.
+Kompilasi seluruh kode (termasuk jalur Readium & Room KSP) sudah **terverifikasi di CI**; yang tersisa adalah pengujian perilaku.
 
 ## 7. Cara menjalankan sendiri
 
 ```bash
-# di mesin dengan JDK 17 + Android SDK (compileSdk 36)
+# di mesin dengan JDK 17 + Android SDK (compileSdk 37, desugaring)
 python3 scripts/verify.py      # pemeriksaan statis
 ./gradlew testDebugUnitTest    # unit test
 ./gradlew assembleDebug        # APK -> app/build/outputs/apk/debug/app-debug.apk

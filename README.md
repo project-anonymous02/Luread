@@ -2,7 +2,7 @@
 
 Perpustakaan digital pribadi & pembaca ebook untuk Android. Katalog gratis dari **Project Gutenberg** lewat API **Gutendex**, tanpa akun, tanpa API key, tanpa iklan/analitik. Data buku, catatan, dan statistik tinggal di perangkat.
 
-> **Status proyek (12 Okt 2026):** seluruh source code tersedia dan lolos pemeriksaan statis, tetapi **belum pernah dikompilasi atau dijalankan** di lingkungan pengembangan ini (tidak ada JDK/SDK di host; lihat `docs/testing.md`). Yang menentukan "bisa jalan" adalah workflow GitHub Actions pertama. Dokumen fitur: `docs/feature-matrix.md`.
+> **Status proyek (13 Okt 2026):** **CI GitHub Actions hijau** (run [`38326003012`](https://github.com/project-anonymous02/Luread/actions/runs/38326003012), commit `1dcdba8`): pemeriksaan statis lolos, **35 unit test lulus**, dan `assembleDebug` menghasilkan artifact `luread-debug-apk` (~33 MB) + `test-reports`. Kompilasi Kotlin/Room KSP/Readium terverifikasi di CI. Yang **belum** diuji: runtime di perangkat/emulator (tidak ada perangkat di lingkungan ini). Dokumen fitur: `docs/feature-matrix.md`.
 
 ## Fitur yang ada
 
@@ -47,7 +47,7 @@ scripts/verify.py       pemeriksaan statis (dijalankan lokal & di CI)
 
 ## Batasan teknis (dibaca dulu)
 
-1. **Belum diverifikasi di perangkat.** Tidak ada kompilasi/run di host pengembangan; jalur Readium/PDF/WebView berstatus *Implemented, Not Tested* sampai CI/perangkat mengujinya.
+1. **Kompilasi & unit test terverifikasi di CI, runtime belum.** Belum ada uji di perangkat/emulator; jalur Readium/PDF/WebView berstatus *Implemented, Not Tested on device* — kompilasi sukses bukan bukti perilaku.
 2. **Sorting katalog tidak ada** — parameter `sort` Gutendex terbukti membalas 503, jadi kontrol sorting sengaja tidak dibuat.
 3. **Filter `mime_type=text/plain` tidak ditawarkan** — terbukti 503 dari audit.
 4. **PDF tidak mendukung seleksi teks** (keterbatasan `PdfRenderer` platform) → aksi terjemahan tidak ditampilkan di PDF.
