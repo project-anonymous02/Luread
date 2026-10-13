@@ -150,6 +150,8 @@
     <string name="import_error_copy">The file could not be copied.</string>
     <string name="import_error_empty">The source file is empty.</string>
     <string name="import_added">Added \'%1$s\' to your library.</string>
+    <string name="import_zip_added">Imported %1$d readable file(s) from \'%2$s\'.</string>
+    <string name="import_zip_empty">No readable books (EPUB/HTML/TXT/PDF/CBZ) found inside the ZIP.</string>
     <string name="import_failed">Import failed.</string>
     <string name="activity_empty_title">No reading sessions yet</string>
     <string name="activity_empty_subtitle">Reading sessions are recorded here whenever you leave the reader.</string>

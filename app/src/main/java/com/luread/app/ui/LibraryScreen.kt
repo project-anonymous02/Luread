@@ -92,6 +92,8 @@ fun LibraryScreen(onOpenBook: (String) -> Unit) {
                             "application/pdf",
                             "text/plain",
                             "text/html",
+                            "application/zip",
+                            "application/vnd.comicbook+zip",
                         ),
                     )
                 },
