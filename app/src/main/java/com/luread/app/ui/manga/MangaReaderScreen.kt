@@ -10,8 +10,8 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ChevronLeft
-import androidx.compose.material.icons.automirrored.filled.ChevronRight
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -149,7 +149,7 @@ fun MangaReaderScreen(
                     onClick = { content.prevChapterId?.let { onNavigateChapter?.invoke(it) } },
                     enabled = content.prevChapterId != null,
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ChevronLeft, contentDescription = "Previous chapter")
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous chapter")
                 }
                 Text(
                     text = "${content.chapterLabel} · ${content.pages.size} pp",
@@ -160,7 +160,7 @@ fun MangaReaderScreen(
                     onClick = { content.nextChapterId?.let { onNavigateChapter?.invoke(it) } },
                     enabled = content.nextChapterId != null,
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ChevronRight, contentDescription = "Next chapter")
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next chapter")
                 }
             }
         },
