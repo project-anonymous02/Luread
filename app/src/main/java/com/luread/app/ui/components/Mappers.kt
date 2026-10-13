@@ -5,7 +5,7 @@ import com.luread.app.data.db.BookEntity
 import com.luread.app.data.network.GutendexBook
 
 fun GutendexBook.toCard(): BookCard = BookCard(
-    id = id,
+    id = key,
     title = title.ifBlank { "Untitled" },
     authorsText = authorNames.joinToString(", "),
     coverUrl = Formats.coverUrl(formats),

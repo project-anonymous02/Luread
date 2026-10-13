@@ -63,11 +63,11 @@ class LibraryViewModel(
         _message.value = null
     }
 
-    fun remove(id: Int) {
+    fun remove(id: String) {
         viewModelScope.launch { library.remove(id) }
     }
 
-    fun toggleFavorite(id: Int, favorite: Boolean) {
+    fun toggleFavorite(id: String, favorite: Boolean) {
         viewModelScope.launch { library.setFavorite(id, favorite) }
     }
 
@@ -90,8 +90,9 @@ class LibraryViewModel(
                 val nameBase = displayName.substringBeforeLast('.', displayName)
                 val nameExt = displayName.substringAfterLast('.', "").lowercase()
 
-                var id = -(System.currentTimeMillis().toInt()).coerceAtLeast(1)
-                while (library.book(id) != null) id -= 1
+                var key = "local:${System.currentTimeMillis()}"
+                var attempt = 0
+                while (library.book(key) != null) key = "local:${System.currentTimeMillis()}-${attempt++}"
 
                 val magic = resolver.openInputStream(uri)?.use { input ->
                     val head = ByteArray(8)
@@ -116,7 +117,7 @@ class LibraryViewModel(
             val mime = if (sniffed == Formats.EPUB_OR_ZIP) Formats.MIME_EPUB else sniffed
 
             val dir = File(appContext.filesDir, "books").apply { mkdirs() }
-            val target = File(dir, "$id.${Formats.extensionFor(mime)}")
+            val target = File(dir, "${key.replace(':', '_')}.${Formats.extensionFor(mime)}")
             val copied = resolver.openInputStream(uri)?.use { input ->
                 target.outputStream().use { output -> input.copyTo(output) }
                 target.length()
@@ -128,7 +129,7 @@ class LibraryViewModel(
 
             val title = nameBase.ifBlank { appContext.getString(R.string.untitled) }
             library.addImported(
-                id = id,
+                key = key,
                 title = title,
                 authorsText = "",
                 path = target.absolutePath,

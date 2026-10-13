@@ -8,7 +8,8 @@ import androidx.room.PrimaryKey
  * Entitas Room untuk data lokal Luread.
  *
  * Keputusan desain:
- *  * buku di perpustakaan disimpan sebagai snapshot dari API sehingga layar
+ *  * kunci buku adalah string komposit sumber-id (mis. gutenberg:1342) sehingga
+ *  * beberapa sumber katalog hidup berdampingan tanpa tabrakan id; layar
  *    perpustakaan dan aktivitas tetap terbaca tanpa jaringan;
  *  * daftar penulis/simpan sebagai teks gabungan (bukan relasi) karena model
  *    sumber hanya dipakai untuk tampilan dan tidak perlu diquery per-orang;
@@ -23,7 +24,7 @@ import androidx.room.PrimaryKey
     indices = [Index(value = ["addedAt"]), Index(value = ["lastOpenedAt"])],
 )
 data class BookEntity(
-    @PrimaryKey val id: Int,
+    @PrimaryKey val id: String,
     val title: String,
     val authorsText: String,
     val summary: String?,
@@ -54,7 +55,7 @@ data class BookEntity(
 )
 data class SessionEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
-    val bookId: Int,
+    val bookId: String,
     val bookTitle: String,
     val startedAt: Long,
     val endedAt: Long,
@@ -71,7 +72,7 @@ data class SessionEntity(
 )
 data class AnnotationEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
-    val bookId: Int,
+    val bookId: String,
     val href: String?,
     val text: String,
     val note: String = "",

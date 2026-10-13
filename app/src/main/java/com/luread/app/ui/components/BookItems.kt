@@ -25,7 +25,7 @@ import com.luread.app.core.util.Format
 
 /** Model tampilan yang dipakai kartu dan baris buku di semua layar. */
 data class BookCard(
-    val id: Int,
+    val id: String,
     val title: String,
     val authorsText: String,
     val coverUrl: String?,

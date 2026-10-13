@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 
 /** Model tampilan detail buku yang menggabungkan snapshot lokal dan data katalog. */
 data class BookDetailUi(
-    val id: Int,
+    val id: String,
     val title: String,
     val authorsText: String,
     val summary: String?,
@@ -51,7 +51,7 @@ data class BookDetailUi(
  *    layar dengan data snapshot.
  */
 class BookDetailViewModel(
-    private val bookId: Int,
+    private val bookId: String,
     private val library: LibraryRepository,
     private val catalog: CatalogRepository,
     private val downloads: DownloadManager,
@@ -93,11 +93,20 @@ class BookDetailViewModel(
 
     private fun fetchCatalog(force: Boolean) {
         if (catalogBook.value != null && !force) return
+        val remoteId = bookId.substringAfter("gutenberg:", "").toIntOrNull()
+        if (remoteId == null) {
+            // Bukan kunci Gutenberg (mis. impor lokal) — cukup snapshot lokal.
+            if (libraryBook.value == null && catalogError.value == null) {
+                catalogError.value = "Book not found."
+            }
+            catalogLoading.value = false
+            return
+        }
         catalogLoading.value = true
         viewModelScope.launch {
-            when (val result = catalog.firstPage(CatalogQuery(ids = bookId))) {
+            when (val result = catalog.firstPage(CatalogQuery(ids = remoteId))) {
                 is ApiResult.Success -> {
-                    val found = result.value.results.firstOrNull { it.id == bookId }
+                    val found = result.value.results.firstOrNull { it.key == bookId }
                         ?: result.value.results.firstOrNull()
                     if (found != null) {
                         catalogBook.value = found
@@ -105,7 +114,7 @@ class BookDetailViewModel(
                         // Pastikan buku yang dibuka dari luar tersedia di perpustakaan
                         // hanya jika pengguna menambahkannya; tidak dilakukan otomatis.
                     } else {
-                        catalogError.value = "Book #$bookId was not found in the catalogue."
+                        catalogError.value = "Book $bookId was not found in the catalogue."
                     }
                 }
                 is ApiResult.Failure -> {

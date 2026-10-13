@@ -12,10 +12,10 @@ interface BookDao {
     fun observeAll(): Flow<List<BookEntity>>
 
     @Query("SELECT * FROM books WHERE id = :id")
-    fun observeById(id: Int): Flow<BookEntity?>
+    fun observeById(id: String): Flow<BookEntity?>
 
     @Query("SELECT * FROM books WHERE id = :id")
-    suspend fun byId(id: Int): BookEntity?
+    suspend fun byId(id: String): BookEntity?
 
     @Query("SELECT * FROM books WHERE localPath IS NOT NULL")
     suspend fun downloaded(): List<BookEntity>
@@ -28,7 +28,7 @@ interface BookDao {
             "lastOpenedAt = :openedAt, finished = :finished WHERE id = :id",
     )
     suspend fun updateReadingState(
-        id: Int,
+        id: String,
         progress: Float,
         locationJson: String?,
         openedAt: Long,
@@ -36,19 +36,19 @@ interface BookDao {
     )
 
     @Query("UPDATE books SET favorite = :favorite WHERE id = :id")
-    suspend fun setFavorite(id: Int, favorite: Boolean)
+    suspend fun setFavorite(id: String, favorite: Boolean)
 
     @Query("UPDATE books SET downloadState = :state, downloadedBytes = :done, totalBytes = :total WHERE id = :id")
-    suspend fun updateDownload(id: Int, state: String, done: Long, total: Long)
+    suspend fun updateDownload(id: String, state: String, done: Long, total: Long)
 
     @Query("UPDATE books SET localPath = :path, contentType = :mime, downloadState = :state WHERE id = :id")
-    suspend fun setLocalFile(id: Int, path: String?, mime: String?, state: String)
+    suspend fun setLocalFile(id: String, path: String?, mime: String?, state: String)
 
     @Query("UPDATE books SET localPath = NULL, downloadState = :state WHERE id = :id")
-    suspend fun clearLocalFile(id: Int, state: String)
+    suspend fun clearLocalFile(id: String, state: String)
 
     @Query("DELETE FROM books WHERE id = :id")
-    suspend fun delete(id: Int)
+    suspend fun delete(id: String)
 
     @Query("DELETE FROM books WHERE localPath = :path")
     suspend fun deleteByPath(path: String)
@@ -70,7 +70,7 @@ interface SessionDao {
             "VALUES (:bookId, :title, :startedAt, :endedAt, :before, :after)",
     )
     suspend fun insert(
-        bookId: Int,
+        bookId: String,
         title: String,
         startedAt: Long,
         endedAt: Long,
@@ -91,7 +91,7 @@ interface SessionDao {
 @Dao
 interface AnnotationDao {
     @Query("SELECT * FROM annotations WHERE bookId = :bookId ORDER BY createdAt DESC")
-    fun observeForBook(bookId: Int): Flow<List<AnnotationEntity>>
+    fun observeForBook(bookId: String): Flow<List<AnnotationEntity>>
 
     @Query("SELECT * FROM annotations ORDER BY createdAt DESC")
     fun observeAll(): Flow<List<AnnotationEntity>>
@@ -103,7 +103,7 @@ interface AnnotationDao {
     suspend fun delete(id: Long)
 
     @Query("DELETE FROM annotations WHERE bookId = :bookId")
-    suspend fun deleteForBook(bookId: Int)
+    suspend fun deleteForBook(bookId: String)
 
     @Query("DELETE FROM annotations")
     suspend fun clear()

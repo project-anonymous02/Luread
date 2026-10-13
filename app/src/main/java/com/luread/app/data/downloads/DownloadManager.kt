@@ -46,20 +46,20 @@ class DownloadManager(
     private val readTimeoutMs: Int = 30_000,
 ) {
     data class Progress(
-        val bookId: Int,
+        val bookId: String,
         val state: BookEntity.DownloadState,
         val doneBytes: Long = 0L,
         val totalBytes: Long = -1L,
     )
 
-    private val _progress = MutableStateFlow<Map<Int, Progress>>(emptyMap())
-    val progress: StateFlow<Map<Int, Progress>> = _progress.asStateFlow()
+    private val _progress = MutableStateFlow<Map<String, Progress>>(emptyMap())
+    val progress: StateFlow<Map<String, Progress>> = _progress.asStateFlow()
 
-    private val jobs = mutableMapOf<Int, Job>()
-    private val cancelled = mutableSetOf<Int>()
+    private val jobs = mutableMapOf<String, Job>()
+    private val cancelled = mutableSetOf<String>()
 
     @Synchronized
-    fun enqueue(bookId: Int, url: String, mime: String?) {
+    fun enqueue(bookId: String, url: String, mime: String?) {
         if (jobs[bookId]?.isActive == true) return
         cancelled.remove(bookId)
         jobs[bookId] = scope.launch(dispatcher) {
@@ -78,7 +78,7 @@ class DownloadManager(
     }
 
     @Synchronized
-    fun cancel(bookId: Int) {
+    fun cancel(bookId: String) {
         cancelled.add(bookId)
         jobs[bookId]?.cancel()
         publish(bookId, BookEntity.DownloadState.NONE, 0L, -1L)
@@ -90,7 +90,7 @@ class DownloadManager(
         jobs.clear()
     }
 
-    private suspend fun download(bookId: Int, url: String, mime: String?) = withContext(dispatcher) {
+    private suspend fun download(bookId: String, url: String, mime: String?) = withContext(dispatcher) {
         val target = targetFile(bookId, mime)
         if (target.isFile && target.length() > 0) {
             books.setLocalFile(bookId, target.absolutePath, mime ?: Formats.MIME_EPUB, BookEntity.DownloadState.DONE.name)
@@ -163,13 +163,15 @@ class DownloadManager(
     /** Hapus berkas buku dari penyimpanan. */
     fun deleteFile(path: String): Boolean = runCatching { File(path).delete() }.getOrDefault(false)
 
-    private fun targetFile(bookId: Int, mime: String?): File {
+    private fun targetFile(bookId: String, mime: String?): File {
         val dir = File(context.filesDir, "books").apply { mkdirs() }
         val ext = Formats.extensionFor(mime ?: Formats.MIME_EPUB)
-        return File(dir, "$bookId.$ext")
+        return File(dir, safeName(bookId) + "." + ext)
     }
 
-    private fun publish(bookId: Int, state: BookEntity.DownloadState, done: Long, total: Long) {
+    private fun safeName(key: String): String = key.replace(":", "_")
+
+    private fun publish(bookId: String, state: BookEntity.DownloadState, done: Long, total: Long) {
         _progress.update { it + (bookId to Progress(bookId, state, done, total)) }
     }
 

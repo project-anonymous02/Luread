@@ -31,7 +31,7 @@ import com.luread.app.core.design.StateMessage
 import com.luread.app.core.util.Format
 
 @Composable
-fun ActivityScreen(onOpenBook: (Int) -> Unit) {
+fun ActivityScreen(onOpenBook: (String) -> Unit) {
     val vm = appViewModel { ActivityViewModel(it.library) }
     val sessions by vm.sessions.collectAsStateWithLifecycle()
     val stats by vm.stats.collectAsStateWithLifecycle()

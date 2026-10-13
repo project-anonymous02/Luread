@@ -54,8 +54,8 @@ object Routes {
     const val READ = "read/{bookId}"
     const val TRANSLATOR = "translator?text={text}"
 
-    fun book(id: Int): String = "book/$id"
-    fun read(id: Int): String = "read/$id"
+    fun book(id: String): String = "book/$id"
+    fun read(id: String): String = "read/$id"
     fun translator(text: String? = null): String =
         if (text.isNullOrEmpty()) "translator?text=" else "translator?text=${android.net.Uri.encode(text)}"
 
@@ -163,9 +163,9 @@ private fun AppNavHost(navController: NavHostController, modifier: Modifier = Mo
         }
         composable(
             route = Routes.BOOK,
-            arguments = listOf(navArgument("bookId") { type = NavType.IntType }),
+            arguments = listOf(navArgument("bookId") { type = NavType.StringType }),
         ) { entry ->
-            val bookId = entry.arguments?.getInt("bookId") ?: return@composable
+            val bookId = entry.arguments?.getString("bookId") ?: return@composable
             BookDetailScreen(
                 bookId = bookId,
                 onBack = { navController.popBackStack() },
@@ -175,9 +175,9 @@ private fun AppNavHost(navController: NavHostController, modifier: Modifier = Mo
         }
         composable(
             route = Routes.READ,
-            arguments = listOf(navArgument("bookId") { type = NavType.IntType }),
+            arguments = listOf(navArgument("bookId") { type = NavType.StringType }),
         ) { entry ->
-            val bookId = entry.arguments?.getInt("bookId") ?: return@composable
+            val bookId = entry.arguments?.getString("bookId") ?: return@composable
             ReaderScreen(
                 bookId = bookId,
                 onBack = { navController.popBackStack() },

@@ -29,9 +29,9 @@ class LibraryRepository(
 
     fun observeDownloaded(): Flow<List<BookEntity>> = books.observeDownloaded()
 
-    fun observeBook(id: Int): Flow<BookEntity?> = books.observeById(id)
+    fun observeBook(id: String): Flow<BookEntity?> = books.observeById(id)
 
-    suspend fun book(id: Int): BookEntity? = books.byId(id)
+    suspend fun book(id: String): BookEntity? = books.byId(id)
 
     suspend fun downloadedBooks(): List<BookEntity> = books.downloaded()
 
@@ -40,7 +40,7 @@ class LibraryRepository(
         val cover = Formats.coverUrl(book.formats)
         val readable = Formats.bestReadable(book.formats)
         val entity = BookEntity(
-            id = book.id,
+            id = book.key,
             title = book.title.ifBlank { "Untitled" },
             authorsText = book.authorNames.joinToString(", "),
             summary = book.summary,
@@ -59,7 +59,7 @@ class LibraryRepository(
 
     /** Tambahkan berkas terimpor (dari SAF) tanpa sumber katalog. */
     suspend fun addImported(
-        id: Int,
+        key: String,
         title: String,
         authorsText: String,
         path: String,
@@ -67,7 +67,7 @@ class LibraryRepository(
         coverUrl: String? = null,
     ): BookEntity {
         val entity = BookEntity(
-            id = id,
+            id = key,
             title = title,
             authorsText = authorsText,
             summary = null,
@@ -85,19 +85,19 @@ class LibraryRepository(
         return entity
     }
 
-    suspend fun setFavorite(id: Int, favorite: Boolean) = books.setFavorite(id, favorite)
+    suspend fun setFavorite(id: String, favorite: Boolean) = books.setFavorite(id, favorite)
 
-    suspend fun updateDownloadState(id: Int, state: BookEntity.DownloadState, done: Long = 0L, total: Long = 0L) =
+    suspend fun updateDownloadState(id: String, state: BookEntity.DownloadState, done: Long = 0L, total: Long = 0L) =
         books.updateDownload(id, state.name, done, total)
 
-    suspend fun setLocalFile(id: Int, path: String, mime: String) =
+    suspend fun setLocalFile(id: String, path: String, mime: String) =
         books.setLocalFile(id, path, mime, BookEntity.DownloadState.DONE.name)
 
     /** Hapus berkas lokal tanpa menghapus entri perpustakaan. */
-    suspend fun clearLocalFile(id: Int) =
+    suspend fun clearLocalFile(id: String) =
         books.clearLocalFile(id, BookEntity.DownloadState.NONE.name)
 
-    suspend fun remove(id: Int) {
+    suspend fun remove(id: String) {
         books.delete(id)
         annotations.deleteForBook(id)
     }
@@ -105,7 +105,7 @@ class LibraryRepository(
     /**
      * Menyimpan progres baca. Buku dianggap selesai bila progres >= 99%.
      */
-    suspend fun saveProgress(id: Int, progress: Float, locationJson: String?) {
+    suspend fun saveProgress(id: String, progress: Float, locationJson: String?) {
         val clamped = progress.coerceIn(0f, 1f)
         books.updateReadingState(
             id = id,
@@ -123,7 +123,7 @@ class LibraryRepository(
     fun observeActivity(): Flow<List<SessionEntity>> = sessions.observeRecent()
 
     suspend fun recordSession(
-        bookId: Int,
+        bookId: String,
         bookTitle: String,
         progressBefore: Float,
         progressAfter: Float,
@@ -137,12 +137,12 @@ class LibraryRepository(
     // Anotasi
     // ------------------------------------------------------------------
 
-    fun observeAnnotations(bookId: Int): Flow<List<AnnotationEntity>> = annotations.observeForBook(bookId)
+    fun observeAnnotations(bookId: String): Flow<List<AnnotationEntity>> = annotations.observeForBook(bookId)
 
     fun observeAllAnnotations(): Flow<List<AnnotationEntity>> = annotations.observeAll()
 
     suspend fun addAnnotation(
-        bookId: Int,
+        bookId: String,
         kind: AnnotationEntity.Kind,
         text: String,
         href: String? = null,

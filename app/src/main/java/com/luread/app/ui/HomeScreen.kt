@@ -36,7 +36,7 @@ import com.luread.app.ui.components.toCard
 
 @Composable
 fun HomeScreen(
-    onOpenBook: (Int) -> Unit,
+    onOpenBook: (String) -> Unit,
     onOpenDiscover: () -> Unit,
 ) {
     val vm = appViewModel { HomeViewModel(it.library, it.catalog) }

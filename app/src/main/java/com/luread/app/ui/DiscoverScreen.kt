@@ -41,7 +41,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 
 @Composable
-fun DiscoverScreen(onOpenBook: (Int) -> Unit) {
+fun DiscoverScreen(onOpenBook: (String) -> Unit) {
     val vm = appViewModel { DiscoverViewModel(it.library, it.catalog) }
     val filters by vm.filters.collectAsStateWithLifecycle()
     val state by vm.state.collectAsStateWithLifecycle()
@@ -121,10 +121,10 @@ fun DiscoverScreen(onOpenBook: (Int) -> Unit) {
                         horizontalArrangement = Arrangement.spacedBy(Md),
                         verticalArrangement = Arrangement.spacedBy(Md),
                     ) {
-                        items(current.page.results, key = { it.id }) { book ->
+                        items(current.page.results, key = { it.key }) { book ->
                             BookGridItem(
                                 card = book.toCard(),
-                                onClick = { onOpenBook(book.id) },
+                                onClick = { onOpenBook(book.key) },
                             )
                         }
                         if (current.isLoadingMore) {

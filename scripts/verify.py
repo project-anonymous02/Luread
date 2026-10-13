@@ -219,6 +219,8 @@ def strip_kotlin_noise(text: str) -> str:
 
 def check_kotlin_sources() -> None:
     for path in sorted((ROOT / "app").rglob("*.kt")):
+        if "build" in path.relative_to(ROOT).parts:
+            continue
         raw = path.read_text(encoding="utf-8")
         rel = path.relative_to(ROOT)
         if ".androidx." in raw:

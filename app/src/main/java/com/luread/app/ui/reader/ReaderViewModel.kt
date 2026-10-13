@@ -60,7 +60,7 @@ sealed interface EpubUi {
  */
 @OptIn(ExperimentalReadiumApi::class)
 class ReaderViewModel(
-    private val bookId: Int,
+    private val bookId: String,
     private val container: AppContainer,
 ) : ViewModel() {
 

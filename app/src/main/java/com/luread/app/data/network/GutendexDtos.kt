@@ -44,6 +44,10 @@ data class GutendexBook(
 
     val authorNames: List<String>
         get() = authors.map { it.name }.filter { it.isNotBlank() }
+
+    /** Kunci komposit buku (sumber:remote-id) untuk navigasi & basis data. */
+    val key: String
+        get() = "gutenberg:$id"
 }
 
 @Serializable

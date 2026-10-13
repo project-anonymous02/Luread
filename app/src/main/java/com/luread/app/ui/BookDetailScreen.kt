@@ -48,9 +48,9 @@ import com.luread.app.data.downloads.DownloadManager
 
 @Composable
 fun BookDetailScreen(
-    bookId: Int,
+    bookId: String,
     onBack: () -> Unit,
-    onRead: (Int) -> Unit,
+    onRead: (String) -> Unit,
     onTranslate: (String) -> Unit,
 ) {
     val vm = appViewModel { BookDetailViewModel(bookId, it.library, it.catalog, it.downloads) }

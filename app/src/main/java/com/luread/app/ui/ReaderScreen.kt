@@ -71,7 +71,7 @@ import org.readium.r2.shared.ExperimentalReadiumApi
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalReadiumApi::class)
 @Composable
 fun ReaderScreen(
-    bookId: Int,
+    bookId: String,
     onBack: () -> Unit,
     onTranslate: (String) -> Unit,
 ) {

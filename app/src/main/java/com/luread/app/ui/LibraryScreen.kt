@@ -44,7 +44,7 @@ import com.luread.app.ui.components.toCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LibraryScreen(onOpenBook: (Int) -> Unit) {
+fun LibraryScreen(onOpenBook: (String) -> Unit) {
     val vm = appViewModel { LibraryViewModel(it.library, it.appContext) }
     val books by vm.books.collectAsStateWithLifecycle()
     val filter by vm.filterState.collectAsStateWithLifecycle()
