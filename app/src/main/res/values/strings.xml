@@ -53,6 +53,11 @@
     <string name="filter_topic_poetry">Poetry</string>
     <string name="filter_format_epub">EPUB</string>
     <string name="filter_format_html">HTML</string>
+    <string name="filter_source">Source</string>
+    <string name="filter_source_gutenberg">Gutenberg</string>
+    <string name="filter_source_openlibrary">Open Library</string>
+    <string name="filter_source_archive">Internet Archive</string>
+    <string name="filter_source_wikisource">Wikisource</string>
     <string name="library_empty_title">Library is empty</string>
     <string name="library_empty_subtitle">No books match this filter. Add some from Discover or import your own files.</string>
     <string name="library_count">%1$d books</string>
@@ -78,7 +83,7 @@
     <string name="activity_history">Session history</string>
 
     <!-- Home -->
-    <string name="home_tagline">Project Gutenberg, no account, works offline.</string>
+    <string name="home_tagline">Gutenberg, Open Library, Internet Archive, Wikisource — no account, works offline.</string>
     <string name="home_continue">Continue reading</string>
     <string name="home_featured">Featured from the catalogue</string>
     <string name="home_recent">Recently added</string>
@@ -86,6 +91,7 @@
     <string name="home_stat_library">%1$d in your library</string>
     <string name="home_stat_offline">%1$d offline</string>
     <string name="home_stat_today">%1$s today</string>
+    <string name="home_credit">Made by Nata, Aplikasi pengganti perpuskita</string>
 
     <!-- Detail buku -->
     <string name="detail_about">About this book</string>

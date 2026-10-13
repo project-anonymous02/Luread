@@ -1,14 +1,14 @@
 package com.luread.app.ui
 
+import com.luread.app.data.catalog.CatalogPage
 import com.luread.app.data.network.ApiError
-import com.luread.app.data.network.GutendexPage
 
 /** Status layar yang bergantung pada jaringan. */
 sealed interface CatalogUiState {
     data object Loading : CatalogUiState
 
     data class Content(
-        val page: GutendexPage,
+        val page: CatalogPage,
         val isLoadingMore: Boolean = false,
     ) : CatalogUiState
 
@@ -31,4 +31,5 @@ fun ApiError.toUserMessage(): String = when (this) {
     }
     is ApiError.NotJson -> "The server response was not valid (it may be having trouble)."
     is ApiError.InvalidUrl -> "The catalogue sent a link this app does not trust, so it was rejected."
+    is ApiError.NotFound -> "That book was not found in the catalogue."
 }

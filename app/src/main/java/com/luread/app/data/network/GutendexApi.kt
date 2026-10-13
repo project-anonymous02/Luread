@@ -28,6 +28,7 @@ sealed class ApiError(open val message: String) {
     data class Http(val code: Int, override val message: String) : ApiError(message)
     data class NotJson(override val message: String) : ApiError(message)
     data class InvalidUrl(override val message: String) : ApiError(message)
+    data class NotFound(override val message: String) : ApiError(message)
 }
 
 /**

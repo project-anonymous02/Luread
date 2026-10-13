@@ -10,12 +10,16 @@ Legenda: `V` Verified (sumber/audit), `I` Implemented (kode ada), `IT` Implement
 | Fitur prompt | Status | Bukti / catatan jujur |
 | --- | --- | --- |
 | Gutendex sebagai sumber | V | Audit penuh, `docs/gutendex-api-audit.md` |
+| Open Library sebagai sumber | V | Uji curl penuh, `docs/book-apis-audit.md` §1; unduhan lewat `editions→ocaid→archive.org/metadata` |
+| Internet Archive sebagai sumber | V | Uji curl penuh, §2 (`advancedsearch.php` + `metadata/{id}`); filter bahasa ISO 639-2 teruji |
+| Wikisource Indonesia sebagai sumber | V | Uji curl penuh, §3 (`list=search`/`allpages`/`action=parse`; `prop=extracts` terbukti rusak di wiki ini) |
+| Filter sumber (chip "Source") | I | `DiscoverScreen` + `DiscoverViewModel.setSource`; baris filter yang tidak didukung sumber aktif disembunyikan (bahasa di Wikisource; topik/format di luar Gutenberg) |
 | Search (judul/penulis lewat `search`) | I | `DiscoverViewModel` debounce 400 ms |
-| Pagination | I | `CatalogRepository.fetchPage(page)` |
+| Pagination | I | `CatalogRepository.nextPage(cursor, query, source)` — kursor per sumber: URL tepercaya (Gutenberg), `page=N` (OL/IA), `search:offset`/`browse:judul` (Wikisource) |
 | Infinite scroll terkendali | I | `DiscoverScreen`: load berikutnya saat item terakhir ≤ total−4 |
-| Language filter | I | 10 bahasa, hanya yang terverifikasi 200 |
-| Subject/topic filter | I | `children`, `poetry` (terverifikasi 200) |
-| Format filter | I | EPUB (`application/epub+zip`), HTML (`text/html`); `text/plain` **tidak** ditawarkan (503) |
+| Language filter | I | Gutenberg: 10 bahasa terverifikasi; Open Library & Internet Archive: kode ISO 639-2 (uji curl); Wikisource: disembunyikan (wiki khusus `id`) |
+| Subject/topic filter | I | `children`, `poetry` — **hanya Gutenberg** (parameter OL/IA tidak didukung → baris disembunyikan) |
+| Format filter | I | EPUB (`application/epub+zip`), HTML (`text/html`) **hanya Gutenberg**; `text/plain` **tidak** ditawarkan (503) |
 | Sorting | — | Tidak ada di UI. Parameter `sort` terbukti 503 → kontrol sorting **tidak dibuat** agar tidak menampilkan pilihan palsu |
 | Bookshelf filter | P | Field ada di API, parameter tidak diuji → tidak ditampilkan |
 | Search result count | I | `count` dari API ditampilkan |

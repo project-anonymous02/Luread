@@ -35,6 +35,7 @@ import com.luread.app.core.design.LureadSpace.Md
 import com.luread.app.core.design.LureadSpace.Xs
 import com.luread.app.core.design.SkeletonRows
 import com.luread.app.core.design.StateMessage
+import com.luread.app.data.catalog.BookSource
 import com.luread.app.ui.components.BookGridItem
 import com.luread.app.ui.components.toCard
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -78,23 +79,36 @@ fun DiscoverScreen(onOpenBook: (String) -> Unit) {
         )
 
         FilterRow(
-            label = stringResource(R.string.filter_language),
-            options = languageOptions,
-            selected = filters.language,
-            onSelect = vm::setLanguage,
+            label = stringResource(R.string.filter_source),
+            options = sourceOptions,
+            selected = filters.source.id,
+            onSelect = { id ->
+                val picked = BookSource.entries.firstOrNull { it.id == id }
+                if (picked != null) vm.setSource(picked)
+            },
         )
-        FilterRow(
-            label = stringResource(R.string.filter_topic),
-            options = topicOptions,
-            selected = filters.topic,
-            onSelect = vm::setTopic,
-        )
-        FilterRow(
-            label = stringResource(R.string.filter_format),
-            options = formatOptions,
-            selected = filters.mimeType,
-            onSelect = vm::setMimeType,
-        )
+        if (filters.source != BookSource.WIKISOURCE) {
+            FilterRow(
+                label = stringResource(R.string.filter_language),
+                options = languageOptions,
+                selected = filters.language,
+                onSelect = vm::setLanguage,
+            )
+        }
+        if (filters.source == BookSource.GUTENDEX) {
+            FilterRow(
+                label = stringResource(R.string.filter_topic),
+                options = topicOptions,
+                selected = filters.topic,
+                onSelect = vm::setTopic,
+            )
+            FilterRow(
+                label = stringResource(R.string.filter_format),
+                options = formatOptions,
+                selected = filters.mimeType,
+                onSelect = vm::setMimeType,
+            )
+        }
 
         when (val current = state) {
             is CatalogUiState.Loading -> SkeletonRows(count = 6)
@@ -147,6 +161,13 @@ fun DiscoverScreen(onOpenBook: (String) -> Unit) {
 }
 
 private data class ChipOption(val value: String?, @StringRes val labelRes: Int)
+
+private val sourceOptions = listOf(
+    ChipOption(BookSource.GUTENDEX.id, R.string.filter_source_gutenberg),
+    ChipOption(BookSource.OPEN_LIBRARY.id, R.string.filter_source_openlibrary),
+    ChipOption(BookSource.INTERNET_ARCHIVE.id, R.string.filter_source_archive),
+    ChipOption(BookSource.WIKISOURCE.id, R.string.filter_source_wikisource),
+)
 
 private val languageOptions = listOf(
     ChipOption(null, R.string.filter_any_language),

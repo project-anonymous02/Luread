@@ -5,7 +5,7 @@ import com.luread.app.data.db.BookDao
 import com.luread.app.data.db.BookEntity
 import com.luread.app.data.db.SessionDao
 import com.luread.app.data.db.SessionEntity
-import com.luread.app.data.network.GutendexBook
+import com.luread.app.data.catalog.CatalogItem
 import com.luread.app.data.catalog.Formats
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -36,18 +36,18 @@ class LibraryRepository(
     suspend fun downloadedBooks(): List<BookEntity> = books.downloaded()
 
     /** Menyimpan snapshot buku dari katalog ke perpustakaan. */
-    suspend fun addFromCatalog(book: GutendexBook): BookEntity {
-        val cover = Formats.coverUrl(book.formats)
+    suspend fun addFromCatalog(book: CatalogItem): BookEntity {
         val readable = Formats.bestReadable(book.formats)
+        val urls = Formats.urlsByMime(book.formats)
         val entity = BookEntity(
             id = book.key,
             title = book.title.ifBlank { "Untitled" },
-            authorsText = book.authorNames.joinToString(", "),
+            authorsText = book.authors.joinToString(", "),
             summary = book.summary,
             languagesText = book.languages.joinToString(", "),
             subjectsText = book.subjects.take(6).joinToString(", "),
-            coverUrl = cover,
-            sourceUrl = readable?.let { Formats.urlsByMime(book.formats)[it.mime] },
+            coverUrl = book.coverUrl ?: Formats.coverUrl(book.formats),
+            sourceUrl = readable?.let { urls[it.mime] } ?: book.canonicalUrl,
             contentType = readable?.mime,
             localPath = null,
             downloadState = BookEntity.DownloadState.NONE.name,

@@ -2,14 +2,14 @@ package com.luread.app.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.luread.app.data.network.CatalogQuery
+import com.luread.app.data.catalog.BookSource
+import com.luread.app.data.catalog.CatalogItem
 import com.luread.app.data.catalog.CatalogRepository
 import com.luread.app.data.catalog.Formats
 import com.luread.app.data.db.BookEntity
 import com.luread.app.data.downloads.DownloadManager
 import com.luread.app.data.library.LibraryRepository
 import com.luread.app.data.network.ApiResult
-import com.luread.app.data.network.GutendexBook
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -42,13 +42,18 @@ data class BookDetailUi(
 )
 
 /**
- * Detail buku.
+ * Detail buku untuk semua sumber katalog.
  *
  * Sumber data:
  *  * snapshot lokal bila buku sudah masuk perpustakaan (jalan offline);
- *  * `GET /books/?ids=<id>` bila belum (parameter ini sudah diuji 200 di audit);
+ *  * `CatalogRepository.fetchDetail(key)` bila belum — per sumber:
+ *    Gutenberg `ids=`, Open Library karya+edisi+metadata IA,
+ *    Internet Archive `metadata/`, Wikisource `action=parse`;
  *  * kegagalan katalog pada buku yang sudah tersimpan lokal tetap menampilkan
  *    layar dengan data snapshot.
+ *
+ * Wikisource: payload HTML dari `action=parse` disimpan sementara dan
+ * ditulis lokal oleh [DownloadManager.enqueueText] saat pengguna mengunduh.
  */
 class BookDetailViewModel(
     private val bookId: String,
@@ -57,7 +62,9 @@ class BookDetailViewModel(
     private val downloads: DownloadManager,
 ) : ViewModel() {
 
-    private val catalogBook = MutableStateFlow<GutendexBook?>(null)
+    private val source: BookSource = BookSource.fromKey(bookId)
+    private val catalogBook = MutableStateFlow<CatalogItem?>(null)
+    private val catalogPayload = MutableStateFlow<String?>(null)
     private val catalogError = MutableStateFlow<String?>(null)
     private val catalogLoading = MutableStateFlow(false)
 
@@ -93,31 +100,17 @@ class BookDetailViewModel(
 
     private fun fetchCatalog(force: Boolean) {
         if (catalogBook.value != null && !force) return
-        val remoteId = bookId.substringAfter("gutenberg:", "").toIntOrNull()
-        if (remoteId == null) {
-            // Bukan kunci Gutenberg (mis. impor lokal) — cukup snapshot lokal.
-            if (libraryBook.value == null && catalogError.value == null) {
-                catalogError.value = "Book not found."
-            }
-            catalogLoading.value = false
-            return
-        }
         catalogLoading.value = true
         viewModelScope.launch {
-            when (val result = catalog.firstPage(CatalogQuery(ids = remoteId))) {
+            when (val result = catalog.fetchDetail(bookId)) {
                 is ApiResult.Success -> {
-                    val found = result.value.results.firstOrNull { it.key == bookId }
-                        ?: result.value.results.firstOrNull()
-                    if (found != null) {
-                        catalogBook.value = found
-                        catalogError.value = null
-                        // Pastikan buku yang dibuka dari luar tersedia di perpustakaan
-                        // hanya jika pengguna menambahkannya; tidak dilakukan otomatis.
-                    } else {
-                        catalogError.value = "Book $bookId was not found in the catalogue."
-                    }
+                    catalogBook.value = result.value.item
+                    catalogPayload.value = result.value.payload
+                    catalogError.value = null
                 }
                 is ApiResult.Failure -> {
+                    // Kunci impor lokal (`local:…`) memang tak ada di katalog —
+                    // hanya laporkan galat bila buku juga tidak ada lokal.
                     if (libraryBook.value == null) {
                         catalogError.value = result.error.toUserMessage()
                     }
@@ -142,18 +135,59 @@ class BookDetailViewModel(
     }
 
     fun download() {
+        val remote = catalogBook.value
+        if (source == BookSource.WIKISOURCE) {
+            downloadWikisource(remote)
+            return
+        }
         val url = libraryBook.value?.sourceUrl
-            ?: Formats.urlsByMime(catalogBook.value?.formats ?: emptyMap()).let { map ->
-                Formats.bestReadable(catalogBook.value?.formats ?: emptyMap())
-                    ?.let { readable -> map[readable.mime] }
+            ?: remote?.let { item ->
+                Formats.bestReadable(item.formats)?.let { readable ->
+                    Formats.urlsByMime(item.formats)[readable.mime]
+                }
             }
+            ?: remote?.canonicalUrl
             ?: return
+
         val mime = libraryBook.value?.contentType
-            ?: Formats.bestReadable(catalogBook.value?.formats ?: emptyMap())?.mime
+            ?: remote?.let { Formats.bestReadable(it.formats)?.mime }
         downloads.enqueue(bookId, url, mime)
-        if (libraryBook.value == null) {
-            val remote = catalogBook.value
-            if (remote != null) viewModelScope.launch { library.addFromCatalog(remote) }
+        if (libraryBook.value == null && remote != null) {
+            viewModelScope.launch { library.addFromCatalog(remote) }
+        }
+    }
+
+    /**
+     * Wikisource: artikel sudah berupa HTML dari `action=parse`; bila payload
+     * belum ada (mis. setelah refresh), ambil ulang detail dulu.
+     */
+    private fun downloadWikisource(remote: CatalogItem?) {
+        val payload = catalogPayload.value
+        if (payload != null) {
+            finishWikisourceDownload(payload, remote)
+            return
+        }
+        viewModelScope.launch {
+            when (val result = catalog.fetchDetail(bookId)) {
+                is ApiResult.Success -> {
+                    catalogBook.value = result.value.item
+                    catalogPayload.value = result.value.payload
+                    val html = result.value.payload
+                    if (html != null) finishWikisourceDownload(html, result.value.item)
+                }
+                is ApiResult.Failure -> {
+                    if (libraryBook.value == null) {
+                        catalogError.value = result.error.toUserMessage()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun finishWikisourceDownload(html: String, remote: CatalogItem?) {
+        downloads.enqueueText(bookId, html, Formats.MIME_HTML)
+        if (libraryBook.value == null && remote != null) {
+            viewModelScope.launch { library.addFromCatalog(remote) }
         }
     }
 
@@ -169,7 +203,7 @@ class BookDetailViewModel(
 
     private fun merge(
         local: BookEntity?,
-        remote: GutendexBook?,
+        remote: CatalogItem?,
         downloadProgress: DownloadManager.Progress?,
     ): BookDetailUi? {
         val readableRemote = remote?.let { Formats.bestReadable(it.formats) }
@@ -182,6 +216,7 @@ class BookDetailViewModel(
         val title = local?.title ?: remote?.title ?: return null
         val sourceUrl = local?.sourceUrl
             ?: readableRemote?.let { remoteUrls[it.mime] }
+            ?: remote?.canonicalUrl
         val contentType = local?.contentType ?: readableRemote?.mime
         val localPath = local?.localPath
 
@@ -189,13 +224,13 @@ class BookDetailViewModel(
             id = bookId,
             title = title,
             authorsText = local?.authorsText?.takeIf { it.isNotBlank() }
-                ?: remote?.authorNames?.joinToString(", ").orEmpty(),
+                ?: remote?.authors?.joinToString(", ").orEmpty(),
             summary = local?.summary ?: remote?.summary,
             subjectsText = local?.subjectsText?.takeIf { it.isNotBlank() }
                 ?: remote?.subjects?.take(8)?.joinToString(", ").orEmpty(),
             languagesText = local?.languagesText?.takeIf { it.isNotBlank() }
                 ?: remote?.languages?.joinToString(", ").orEmpty(),
-            coverUrl = local?.coverUrl ?: remote?.let { Formats.coverUrl(it.formats) },
+            coverUrl = local?.coverUrl ?: remote?.coverUrl ?: remote?.let { Formats.coverUrl(it.formats) },
             inLibrary = local != null,
             localPath = localPath,
             contentType = contentType,

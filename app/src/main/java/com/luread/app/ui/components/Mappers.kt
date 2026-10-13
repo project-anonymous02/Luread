@@ -1,14 +1,14 @@
 package com.luread.app.ui.components
 
+import com.luread.app.data.catalog.CatalogItem
 import com.luread.app.data.catalog.Formats
 import com.luread.app.data.db.BookEntity
-import com.luread.app.data.network.GutendexBook
 
-fun GutendexBook.toCard(): BookCard = BookCard(
+fun CatalogItem.toCard(): BookCard = BookCard(
     id = key,
     title = title.ifBlank { "Untitled" },
-    authorsText = authorNames.joinToString(", "),
-    coverUrl = Formats.coverUrl(formats),
+    authorsText = authors.joinToString(", "),
+    coverUrl = coverUrl ?: Formats.coverUrl(formats),
 )
 
 fun BookEntity.toCard(): BookCard = BookCard(

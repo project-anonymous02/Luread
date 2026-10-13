@@ -1,13 +1,13 @@
 # Luread
 
-Perpustakaan digital pribadi & pembaca ebook untuk Android. Katalog gratis dari **Project Gutenberg** lewat API **Gutendex**, tanpa akun, tanpa API key, tanpa iklan/analitik. Data buku, catatan, dan statistik tinggal di perangkat.
+Perpustakaan digital pribadi & pembaca ebook untuk Android. Katalog gratis dari empat sumber tanpa akun dan tanpa API key: **Project Gutenberg** (Gutendex), **Open Library**, **Internet Archive**, dan **Wikisource Indonesia** — tanpa iklan/analitik. Data buku, catatan, dan statistik tinggal di perangkat.
 
 > **Status proyek (13 Okt 2026):** **CI GitHub Actions hijau** (run [`38326003012`](https://github.com/project-anonymous02/Luread/actions/runs/38326003012), commit `1dcdba8`): pemeriksaan statis lolos, **35 unit test lulus**, dan `assembleDebug` menghasilkan artifact `luread-debug-apk` (~33 MB) + `test-reports`. Kompilasi Kotlin/Room KSP/Readium terverifikasi di CI. Yang **belum** diuji: runtime di perangkat/emulator (tidak ada perangkat di lingkungan ini). Dokumen fitur: `docs/feature-matrix.md`.
 
 ## Fitur yang ada
 
-* **Discover** — pencarian katalog, filter bahasa/topik/format (hanya parameter API yang terverifikasi), pagination & infinite scroll, hitung jumlah hasil dari API.
-* **Detail buku** — metadata apa adanya (penulis, bahasa, topik, ringkasan, hak cipta, daftar format). Bila sebuah data tidak tersedia, tidak ditampilkan (tidak ditebak).
+* **Discover** — pencarian empat sumber katalog (Gutenberg, Open Library, Internet Archive, Wikisource id) lewat chip **Source**, filter bahasa/topik/format (hanya parameter API yang terverifikasi — baris filter yang tidak didukung sumber aktif disembunyikan), pagination & infinite scroll, hitung jumlah hasil dari API. Rincian uji tiap endpoint: `docs/book-apis-audit.md`.
+* **Detail buku** — metadata apa adanya (penulis, bahasa, topik, ringkasan, hak cipta, daftar format). Bila sebuah data tidak tersedia, tidak ditampilkan (tidak ditebak). Unduhan tiap sumber diselesaikan ke file nyata (EPUB/PDF/TXT dari Internet Archive; artikel Wikisource disimpan sebagai HTML lokal).
 * **Unduhan** — progres byte nyata, batal, validasi magic byte (EPUB/zip & PDF) sebelum ditandai selesai.
 * **Perpustakaan lokal** — tambah dari katalog atau impor file via SAF (EPUB/PDF/TXT/HTML), filter, favorit, hapus metadata tanpa menghapus file kecuali diminta.
 * **Pembaca** — EPUB 2/3 (Readium 3.4.0), PDF (`PdfRenderer`), TXT (paginasi internal), HTML lokal (WebView tanpa JS). Progres tersimpan otomatis, resume posisi, bookmark, daftar anotasi dengan lompat ke lokasi (EPUB).

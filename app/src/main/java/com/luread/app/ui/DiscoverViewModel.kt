@@ -2,11 +2,11 @@ package com.luread.app.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.luread.app.data.network.CatalogQuery
+import com.luread.app.data.catalog.BookSource
 import com.luread.app.data.catalog.CatalogRepository
 import com.luread.app.data.library.LibraryRepository
 import com.luread.app.data.network.ApiResult
-import com.luread.app.data.network.GutendexPage
+import com.luread.app.data.network.CatalogQuery
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,14 +16,17 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Layar Discover: pencarian dan penyaringan katalog lalu muat halaman berikutnya.
+ * Layar Discover: pencarian, pemilihan sumber, dan penyaringan katalog lalu
+ * muat halaman berikutnya.
  *
- * Filter yang tersedia hanya yang sudah diuji terhadap API (lihat
- * docs/gutendex-api-audit.md):
- *  * `languages`: en, fr, de, es, it, nl, pt, ru, zh, fi -> 200;
- *  * `topic`: children, poetry -> 200;
- *  * `mime_type`: application/epub+zip, text/html -> 200;
- *  * `mime_type=text/plain` teramati membalas 503 dan sengaja tidak ditawarkan.
+ * Filter per sumber (semua diverifikasi lewat curl 2026-10-13, lihat
+ * docs/book-apis-audit.md):
+ *  * Gutenberg: languages en/fr/de/es/it/nl/pt/ru/zh/fi, topic
+ *    children/poetry, mime epub/html (mime text/plain sengaja tidak ditawarkan
+ *    karena teramati membalas 503);
+ *  * Open Library & Internet Archive: languages (kode ISO 639-2) — topic dan
+ *    format tidak didukung pencarian keduanya sehingga barisnya disembunyikan;
+ *  * Wikisource id: pencarian teks saja (semua konten berbahasa Indonesia).
  */
 class DiscoverViewModel(
     @Suppress("unused") private val library: LibraryRepository,
@@ -35,6 +38,7 @@ class DiscoverViewModel(
         val language: String? = null,
         val topic: String? = null,
         val mimeType: String? = null,
+        val source: BookSource = BookSource.GUTENDEX,
     )
 
     private val _filters = MutableStateFlow(Filters())
@@ -43,7 +47,7 @@ class DiscoverViewModel(
     private val _state = MutableStateFlow<CatalogUiState>(CatalogUiState.Loading)
     val state: StateFlow<CatalogUiState> = _state.asStateFlow()
 
-    private var nextUrl: String? = null
+    private var nextCursor: String? = null
     private var searchJob: Job? = null
     private var fetchJob: Job? = null
 
@@ -59,6 +63,12 @@ class DiscoverViewModel(
             delay(400)
             reload()
         }
+    }
+
+    fun setSource(source: BookSource) {
+        if (_filters.value.source == source) return
+        _filters.update { it.copy(source = source) }
+        reload()
     }
 
     fun setLanguage(code: String?) {
@@ -79,17 +89,17 @@ class DiscoverViewModel(
     fun retry() = reload()
 
     fun loadMore() {
-        val url = nextUrl ?: return
+        val cursor = nextCursor ?: return
         val current = _state.value
         if (current is CatalogUiState.Content && current.isLoadingMore) return
         if (_state.value is CatalogUiState.Loading) return
         _state.update { (it as? CatalogUiState.Content)?.copy(isLoadingMore = true) ?: it }
 
         fetchJob = viewModelScope.launch {
-            when (val result = catalog.pageAt(url)) {
+            when (val result = catalog.nextPage(cursor, queryOf(_filters.value), _filters.value.source)) {
                 is ApiResult.Success -> {
                     val previous = (current as? CatalogUiState.Content)?.page
-                    nextUrl = catalog.trustedNext(result.value)
+                    nextCursor = result.value.next
                     _state.value = CatalogUiState.Content(
                         page = merge(previous, result.value),
                         isLoadingMore = false,
@@ -107,21 +117,14 @@ class DiscoverViewModel(
 
     private fun reload() {
         fetchJob?.cancel()
-        nextUrl = null
+        nextCursor = null
         _state.value = CatalogUiState.Loading
 
         val f = _filters.value
-        val query = CatalogQuery(
-            search = f.search.trim().takeIf { it.isNotEmpty() },
-            languages = listOfNotNull(f.language),
-            topic = f.topic,
-            mimeType = f.mimeType,
-        )
-
         fetchJob = viewModelScope.launch {
-            when (val result = catalog.firstPage(query)) {
+            when (val result = catalog.firstPage(queryOf(f), f.source)) {
                 is ApiResult.Success -> {
-                    nextUrl = catalog.trustedNext(result.value)
+                    nextCursor = result.value.next
                     _state.value = CatalogUiState.Content(result.value)
                 }
                 is ApiResult.Failure -> _state.value = CatalogUiState.Error(result.error.toUserMessage())
@@ -129,9 +132,19 @@ class DiscoverViewModel(
         }
     }
 
-    private fun merge(previous: GutendexPage?, next: GutendexPage): GutendexPage {
+    private fun queryOf(f: Filters) = CatalogQuery(
+        search = f.search.trim().takeIf { it.isNotEmpty() },
+        languages = listOfNotNull(f.language),
+        topic = f.topic,
+        mimeType = f.mimeType,
+    )
+
+    private fun merge(
+        previous: com.luread.app.data.catalog.CatalogPage?,
+        next: com.luread.app.data.catalog.CatalogPage,
+    ): com.luread.app.data.catalog.CatalogPage {
         if (previous == null) return next
-        val seen = previous.results.map { it.id }.toSet()
-        return next.copy(results = previous.results + next.results.filter { it.id !in seen })
+        val seen = previous.results.map { it.key }.toSet()
+        return next.copy(results = previous.results + next.results.filter { it.key !in seen })
     }
 }

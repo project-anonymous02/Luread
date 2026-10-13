@@ -26,6 +26,13 @@ class CatalogErrorTest {
         val message = ApiErrorShim.notJson().toUserMessage()
         assertTrue(message.contains("not valid"))
     }
+
+    @Test
+    fun `buku tidak ditemukan memakai pesan khusus bukan pesan jaringan`() {
+        val message = ApiErrorShim.notFound().toUserMessage()
+        assertTrue(message.contains("not found"))
+        assertTrue(!message.contains("internet"))
+    }
 }
 
 private object ApiErrorShim {
@@ -33,4 +40,5 @@ private object ApiErrorShim {
     fun timeout() = com.luread.app.data.network.ApiError.Timeout("timeout")
     fun http503() = com.luread.app.data.network.ApiError.Http(503, "Service Unavailable")
     fun notJson() = com.luread.app.data.network.ApiError.NotJson("HTML")
+    fun notFound() = com.luread.app.data.network.ApiError.NotFound("Book missing")
 }

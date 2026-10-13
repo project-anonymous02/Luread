@@ -84,6 +84,49 @@ class DownloadManager(
         publish(bookId, BookEntity.DownloadState.NONE, 0L, -1L)
     }
 
+    /**
+     * Simpan teks/HTML hasil fetch aplikasi (mis. artikel Wikisource dari
+     * `action=parse`) sebagai berkas baca, dengan sikap progres/gagal yang
+     * sama seperti unduhan biasa.
+     */
+    @Synchronized
+    fun enqueueText(bookId: String, text: String, mime: String) {
+        if (jobs[bookId]?.isActive == true) return
+        cancelled.remove(bookId)
+        jobs[bookId] = scope.launch(dispatcher) {
+            try {
+                val total = text.toByteArray(Charsets.UTF_8).size.toLong()
+                publish(bookId, BookEntity.DownloadState.RUNNING, 0L, total)
+                books.updateDownload(bookId, BookEntity.DownloadState.RUNNING.name, 0L, -1L)
+
+                val target = targetFile(bookId, mime)
+                target.parentFile?.mkdirs()
+                val temp = File(target.parentFile, target.name + ".part")
+                temp.writeText(text)
+
+                coroutineContext.ensureActive()
+                if (cancelled.contains(bookId)) throw kotlinx.coroutines.CancellationException("cancelled")
+
+                withContext(NonCancellable) {
+                    if (target.exists()) target.delete()
+                    if (!temp.renameTo(target)) {
+                        temp.copyTo(target, overwrite = true)
+                        temp.delete()
+                    }
+                    books.setLocalFile(bookId, target.absolutePath, mime, BookEntity.DownloadState.DONE.name)
+                }
+                publish(bookId, BookEntity.DownloadState.DONE, total, total)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (t: Throwable) {
+                withContext(NonCancellable) {
+                    books.updateDownload(bookId, BookEntity.DownloadState.FAILED.name, 0L, -1L)
+                    publish(bookId, BookEntity.DownloadState.FAILED, 0L, -1L)
+                }
+            }
+        }
+    }
+
     @Synchronized
     fun cancelAll() {
         jobs.values.toList().forEach { it.cancel() }
