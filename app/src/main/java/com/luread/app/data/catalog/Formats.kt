@@ -47,7 +47,7 @@ object Formats {
      * Bila ada dua varian charset untuk MIME sama, `charset=utf-8` dipilih lebih dulu.
      */
     fun urlsByMime(formats: Map<String, String?>): Map<String, String> {
-        val picked = LinkedHashMap<String, Pair<String, String>>()
+        val picked = LinkedHashMap<String, Pair<Int, String>>()
         for ((rawKey, url) in formats) {
             val mime = normalizeMime(rawKey)
             if (url.isNullOrBlank()) continue
