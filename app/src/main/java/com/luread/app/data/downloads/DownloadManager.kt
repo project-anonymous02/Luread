@@ -93,7 +93,7 @@ class DownloadManager(
     private suspend fun download(bookId: Int, url: String, mime: String?) = withContext(dispatcher) {
         val target = targetFile(bookId, mime)
         if (target.isFile && target.length() > 0) {
-            books.setLocalFile(bookId, target.absolutePath, mime ?: Formats.EPUB, BookEntity.DownloadState.DONE.name)
+            books.setLocalFile(bookId, target.absolutePath, mime ?: Formats.MIME_EPUB, BookEntity.DownloadState.DONE.name)
             publish(bookId, BookEntity.DownloadState.DONE, target.length(), target.length())
             return@withContext
         }
@@ -139,7 +139,7 @@ class DownloadManager(
             // text/html dan text/plain tidak punya magic number, jadi wajar bila
             // sniff gagal; yang penting berkas tidak kosong dan tipe yang terdeteksi
             // bukan format yang tidak dikenal.
-            val ok = sniffed == null || sniffed == Formats.EPUB_OR_ZIP || sniffed == Formats.PDF
+            val ok = sniffed == null || sniffed == Formats.EPUB_OR_ZIP || sniffed == Formats.MIME_PDF
             if (!ok) {
                 temp.delete()
                 throw DownloadException("Unrecognised file content (sniff=$sniffed)")
@@ -151,7 +151,7 @@ class DownloadManager(
                     temp.copyTo(target, overwrite = true)
                     temp.delete()
                 }
-                books.setLocalFile(bookId, target.absolutePath, sniffed ?: mime ?: Formats.EPUB, BookEntity.DownloadState.DONE.name)
+                books.setLocalFile(bookId, target.absolutePath, sniffed ?: mime ?: Formats.MIME_EPUB, BookEntity.DownloadState.DONE.name)
             }
             publish(bookId, BookEntity.DownloadState.DONE, done, total)
         } finally {
@@ -165,7 +165,7 @@ class DownloadManager(
 
     private fun targetFile(bookId: Int, mime: String?): File {
         val dir = File(context.filesDir, "books").apply { mkdirs() }
-        val ext = Formats.extensionFor(mime ?: Formats.EPUB)
+        val ext = Formats.extensionFor(mime ?: Formats.MIME_EPUB)
         return File(dir, "$bookId.$ext")
     }
 

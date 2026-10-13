@@ -13,8 +13,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -67,8 +70,8 @@ fun DiscoverScreen(onOpenBook: (Int) -> Unit) {
             placeholder = { Text(stringResource(R.string.discover_search_hint)) },
             singleLine = true,
             leadingIcon = {
-                androidx.compose.material3.Icon(
-                    imageVector = androidx.compose.material.icons.Icons.Outlined.Search,
+                Icon(
+                    imageVector = Icons.Outlined.Search,
                     contentDescription = null,
                 )
             },

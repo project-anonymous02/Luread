@@ -1,6 +1,6 @@
 package com.luread.app.data.network
 
-import com.luread.app.data.catalog.CatalogQuery
+import com.luread.app.data.network.CatalogQuery
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

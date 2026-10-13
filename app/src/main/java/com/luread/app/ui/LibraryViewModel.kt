@@ -105,15 +105,15 @@ class LibraryViewModel(
             } ?: throw IllegalArgumentException(appContext.getString(R.string.import_error_open))
 
             val sniffed = Formats.sniff(magic) ?: when (nameExt) {
-                "epub" -> Formats.EPUB
-                "pdf" -> Formats.PDF
-                "txt", "text" -> Formats.TEXT
-                "html", "htm" -> Formats.HTML
+                "epub" -> Formats.MIME_EPUB
+                "pdf" -> Formats.MIME_PDF
+                "txt", "text" -> Formats.MIME_TEXT
+                "html", "htm" -> Formats.MIME_HTML
                 else -> throw IllegalArgumentException(
                     appContext.getString(R.string.import_error_format, nameExt),
                 )
             }
-            val mime = if (sniffed == Formats.EPUB_OR_ZIP) Formats.EPUB else sniffed
+            val mime = if (sniffed == Formats.EPUB_OR_ZIP) Formats.MIME_EPUB else sniffed
 
             val dir = File(appContext.filesDir, "books").apply { mkdirs() }
             val target = File(dir, "$id.${Formats.extensionFor(mime)}")

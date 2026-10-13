@@ -63,7 +63,7 @@ fun HtmlReader(
     )
 
     LaunchedEffect(webView, fontSp) {
-        webView.textZoom = (fontSp / 16f * 100f).toInt().coerceIn(50, 300)
+        webView.settings.textZoom = (fontSp / 16f * 100f).toInt().coerceIn(50, 300)
         while (isActive) {
             delay(1_000)
             webView.evaluateJavascript(SCROLL_PROGRESS_JS) { raw ->

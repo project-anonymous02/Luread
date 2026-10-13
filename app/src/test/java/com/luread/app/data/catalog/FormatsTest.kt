@@ -98,10 +98,10 @@ class FormatsTest {
 
     @Test
     fun `extensionFor memetakan mime ke ekstensi`() {
-        assertEquals("epub", Formats.extensionFor(Formats.EPUB))
-        assertEquals("pdf", Formats.extensionFor(Formats.PDF))
-        assertEquals("txt", Formats.extensionFor(Formats.TEXT))
-        assertEquals("html", Formats.extensionFor(Formats.HTML))
+        assertEquals("epub", Formats.extensionFor(Formats.MIME_EPUB))
+        assertEquals("pdf", Formats.extensionFor(Formats.MIME_PDF))
+        assertEquals("txt", Formats.extensionFor(Formats.MIME_TEXT))
+        assertEquals("html", Formats.extensionFor(Formats.MIME_HTML))
         assertEquals("bin", Formats.extensionFor("application/x-unknown"))
     }
 
@@ -112,7 +112,7 @@ class FormatsTest {
         val html = "<html><body".toByteArray()
 
         assertEquals(Formats.EPUB_OR_ZIP, Formats.sniff(zip))
-        assertEquals(Formats.PDF, Formats.sniff(pdf))
+        assertEquals(Formats.MIME_PDF, Formats.sniff(pdf))
         assertNull(Formats.sniff(html))
         assertNull(Formats.sniff(ByteArray(0)))
     }

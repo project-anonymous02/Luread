@@ -19,6 +19,9 @@ data class HttpConfig(
  * `expectSuccess = false` disengaja: Gutendex mengembalikan body HTML berstatus
  * 503 untuk sebagian kondisi galat, sehingga status harus ditangani manual
  * daripada dilempar sebagai exception yang tidak bisa dibedakan pengguna.
+ *
+ * Konfigurasi engine OkHttp tidak diperlukan: follow-redirect dan
+ * retry-on-connection-failure sudah default aktif di OkHttp.
  */
 fun createHttpClient(config: HttpConfig): HttpClient = HttpClient(OkHttp) {
     expectSuccess = false
@@ -35,15 +38,8 @@ fun createHttpClient(config: HttpConfig): HttpClient = HttpClient(OkHttp) {
     }
 
     install(HttpTimeout) {
-        requestTimeoutMs = config.requestTimeoutMs
-        connectTimeoutMs = config.connectTimeoutMs
-        socketTimeoutMs = config.requestTimeoutMs
-    }
-
-    engine {
-        config {
-            followRedirects = true
-            retryOnConnectionFailure = true
-        }
+        requestTimeoutMillis = config.requestTimeoutMs
+        connectTimeoutMillis = config.connectTimeoutMs
+        socketTimeoutMillis = config.requestTimeoutMs
     }
 }

@@ -37,7 +37,7 @@ import java.io.File
 
 sealed interface ReaderUi {
     data object Loading : ReaderUi
-    data class Ready(val book: BookEntity, val mode: Mode) : ReaderUi
+    data class Ready(val book: BookEntity, val mode: ReaderViewModel.Mode) : ReaderUi
     data class Failed(val message: String) : ReaderUi
 }
 
@@ -134,10 +134,9 @@ class ReaderViewModel(
         val path = target.localPath.orEmpty()
         val contentType = target.contentType.orEmpty()
         return when {
-            contentType == Formats.EPUB || path.endsWith(".epub", ignoreCase = true) -> Mode.EPUB
-            contentType == Formats.PDF || path.endsWith(".pdf", ignoreCase = true) -> Mode.PDF
-            contentType == Formats.HTML ||
-                path.endsWith(".html", ignoreCase = true) ||
+            contentType == Formats.MIME_EPUB || path.endsWith(".epub", ignoreCase = true) -> Mode.EPUB
+            contentType == Formats.MIME_PDF || path.endsWith(".pdf", ignoreCase = true) -> Mode.PDF
+            contentType == Formats.MIME_HTML ||
                 path.endsWith(".htm", ignoreCase = true) -> Mode.HTML
             else -> Mode.TEXT
         }

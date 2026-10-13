@@ -2,7 +2,7 @@ package com.luread.app.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.luread.app.data.catalog.CatalogQuery
+import com.luread.app.data.network.CatalogQuery
 import com.luread.app.data.catalog.CatalogRepository
 import com.luread.app.data.catalog.Formats
 import com.luread.app.data.db.BookEntity

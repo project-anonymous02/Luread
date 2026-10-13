@@ -2,6 +2,7 @@ package com.luread.app.data.catalog
 
 import com.luread.app.data.network.ApiError
 import com.luread.app.data.network.ApiResult
+import com.luread.app.data.network.CatalogQuery
 import com.luread.app.data.network.GutendexApi
 import com.luread.app.data.network.GutendexPage
 import kotlinx.coroutines.CancellationException

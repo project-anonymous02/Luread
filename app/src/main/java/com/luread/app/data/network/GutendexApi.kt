@@ -85,7 +85,7 @@ class GutendexApi(
         val response = try {
             client.get(url) {
                 header(HttpHeaders.UserAgent, USER_AGENT)
-                accept(ContentType.Json)
+                accept(ContentType.Application.Json)
             }
         } catch (t: Throwable) {
             if (t is CancellationException) throw t

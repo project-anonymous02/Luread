@@ -14,21 +14,21 @@ package com.luread.app.data.catalog
  */
 object Formats {
 
-    const val EPUB = "application/epub+zip"
-    const val HTML = "text/html"
-    const val TEXT = "text/plain"
-    const val PDF = "application/pdf"
-    const val MOBI = "application/x-mobipocket-ebook"
-    const val JPEG = "image/jpeg"
-    const val RDF = "application/rdf+xml"
-    const val OCTET_STREAM = "application/octet-stream"
+    const val MIME_EPUB = "application/epub+zip"
+    const val MIME_HTML = "text/html"
+    const val MIME_TEXT = "text/plain"
+    const val MIME_PDF = "application/pdf"
+    const val MIME_MOBI = "application/x-mobipocket-ebook"
+    const val MIME_JPEG = "image/jpeg"
+    const val MIME_RDF = "application/rdf+xml"
+    const val MIME_OCTET_STREAM = "application/octet-stream"
 
     /** Format yang bisa dibaca Luread, terurut dari yang paling disukai. */
     enum class Readable(val mime: String, val label: String, val extension: String) {
-        EPUB(EPUB, "EPUB", "epub"),
-        HTML(HTML, "HTML", "html"),
-        TEXT(TEXT, "Plain text", "txt"),
-        PDF(PDF, "PDF", "pdf"),
+        EPUB(MIME_EPUB, "EPUB", "epub"),
+        HTML(MIME_HTML, "HTML", "html"),
+        TEXT(MIME_TEXT, "Plain text", "txt"),
+        PDF(MIME_PDF, "PDF", "pdf"),
     }
 
     data class AvailableFormat(
@@ -68,7 +68,7 @@ object Formats {
 
     /** URL cover bila katalog menyediakannya. */
     fun coverUrl(formats: Map<String, String?>): String? =
-        urlsByMime(formats)[JPEG]
+        urlsByMime(formats)[MIME_JPEG]
 
     /** Daftar format untuk layar detail, hanya yang URL-nya nyata. */
     fun available(formats: Map<String, String?>): List<AvailableFormat> {
@@ -87,19 +87,19 @@ object Formats {
 
     /** Ekstensi file untuk unduhan. */
     fun extensionFor(mime: String): String = when (normalizeMime(mime)) {
-        EPUB -> "epub"
-        PDF -> "pdf"
-        HTML -> "html"
-        TEXT -> "txt"
-        MOBI -> "mobi"
+        MIME_EPUB -> "epub"
+        MIME_PDF -> "pdf"
+        MIME_HTML -> "html"
+        MIME_TEXT -> "txt"
+        MIME_MOBI -> "mobi"
         else -> "bin"
     }
 
     private fun labelFor(mime: String): String = when (normalizeMime(mime)) {
-        RDF -> "RDF metadata"
-        MOBI -> "MOBI"
-        JPEG -> "Cover"
-        OCTET_STREAM -> "Archive"
+        MIME_RDF -> "RDF metadata"
+        MIME_MOBI -> "MOBI"
+        MIME_JPEG -> "Cover"
+        MIME_OCTET_STREAM -> "Archive"
         "audio/mpeg" -> "Audio (MP3)"
         "audio/ogg" -> "Audio (OGG)"
         "audio/mp4" -> "Audio (M4A)"
@@ -119,7 +119,7 @@ object Formats {
             if (isZip) return EPUB_OR_ZIP
             val isPdf = head[0] == '%'.code.toByte() && head[1] == 'P'.code.toByte() &&
                 head[2] == 'D'.code.toByte() && head[3] == 'F'.code.toByte()
-            if (isPdf) return PDF
+            if (isPdf) return MIME_PDF
         }
         return null
     }
