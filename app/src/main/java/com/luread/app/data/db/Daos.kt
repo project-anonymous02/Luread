@@ -38,6 +38,12 @@ interface BookDao {
     @Query("UPDATE books SET favorite = :favorite WHERE id = :id")
     suspend fun setFavorite(id: String, favorite: Boolean)
 
+    @Query("UPDATE books SET collectionName = :collection WHERE id = :id")
+    suspend fun setCollection(id: String, collection: String?)
+
+    @Query("SELECT DISTINCT collectionName FROM books WHERE collectionName IS NOT NULL ORDER BY collectionName")
+    fun observeCollectionNames(): Flow<List<String>>
+
     @Query("UPDATE books SET downloadState = :state, downloadedBytes = :done, totalBytes = :total WHERE id = :id")
     suspend fun updateDownload(id: String, state: String, done: Long, total: Long)
 

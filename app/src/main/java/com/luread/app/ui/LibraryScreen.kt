@@ -15,10 +15,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BookmarkAdd
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.FileOpen
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -30,6 +32,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -52,7 +57,11 @@ fun LibraryScreen(onOpenBook: (String) -> Unit) {
     val filter by vm.filterState.collectAsStateWithLifecycle()
     val sort by vm.sortState.collectAsStateWithLifecycle()
     val search by vm.searchState.collectAsStateWithLifecycle()
+    val collections by vm.collectionNames.collectAsStateWithLifecycle()
+    val collectionFilter by vm.collectionFilterState.collectAsStateWithLifecycle()
     val message by vm.message.collectAsStateWithLifecycle()
+    var collectionTarget by remember { mutableStateOf<String?>(null) }
+    var collectionDraft by remember { mutableStateOf("") }
 
     val importLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument(),
@@ -132,7 +141,12 @@ fun LibraryScreen(onOpenBook: (String) -> Unit) {
             LibraryViewModel.Filter.entries.forEach { option ->
                 FilterChip(
                     selected = filter == option,
-                    onClick = { vm.setFilter(option) },
+                    onClick = {
+                        vm.setFilter(option)
+                        if (option == LibraryViewModel.Filter.COLLECTION && collectionFilter == null) {
+                            collections.firstOrNull()?.let(vm::setCollectionFilter)
+                        }
+                    },
                     label = {
                         Text(
                             text = stringResource(option.labelRes),
@@ -140,6 +154,24 @@ fun LibraryScreen(onOpenBook: (String) -> Unit) {
                         )
                     },
                 )
+            }
+        }
+
+        if (filter == LibraryViewModel.Filter.COLLECTION) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = Lg),
+                horizontalArrangement = Arrangement.spacedBy(Xs),
+            ) {
+                collections.forEach { name ->
+                    FilterChip(
+                        selected = collectionFilter == name,
+                        onClick = { vm.setCollectionFilter(name) },
+                        label = { Text(name, style = MaterialTheme.typography.labelMedium) },
+                    )
+                }
             }
         }
 
@@ -182,25 +214,69 @@ fun LibraryScreen(onOpenBook: (String) -> Unit) {
                         card = book.toCard(),
                         onClick = { onOpenBook(book.id) },
                         trailing = {
-                            IconButton(onClick = { vm.toggleFavorite(book.id, !book.favorite) }) {
-                                Icon(
-                                    imageVector = if (book.favorite) {
-                                        Icons.Outlined.Favorite
-                                    } else {
-                                        Icons.Outlined.FavoriteBorder
-                                    },
-                                    contentDescription = null,
-                                    tint = if (book.favorite) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
-                                )
+                            Row {
+                                IconButton(onClick = {
+                                    collectionTarget = book.id
+                                    collectionDraft = book.collectionName.orEmpty()
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.BookmarkAdd,
+                                        contentDescription = stringResource(R.string.library_assign_collection),
+                                        tint = if (book.collectionName != null) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        },
+                                    )
+                                }
+                                IconButton(onClick = { vm.toggleFavorite(book.id, !book.favorite) }) {
+                                    Icon(
+                                        imageVector = if (book.favorite) {
+                                            Icons.Outlined.Favorite
+                                        } else {
+                                            Icons.Outlined.FavoriteBorder
+                                        },
+                                        contentDescription = null,
+                                        tint = if (book.favorite) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        },
+                                    )
+                                }
                             }
                         },
                     )
                 }
             }
         }
+    }
+
+    collectionTarget?.let { bookId ->
+        AlertDialog(
+            onDismissRequest = { collectionTarget = null },
+            title = { Text(stringResource(R.string.library_assign_collection)) },
+            text = {
+                OutlinedTextField(
+                    value = collectionDraft,
+                    onValueChange = { collectionDraft = it },
+                    singleLine = true,
+                    placeholder = { Text(stringResource(R.string.library_collection_hint)) },
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        vm.assignCollection(bookId, collectionDraft)
+                        collectionTarget = null
+                    },
+                ) { Text(stringResource(R.string.action_save)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { collectionTarget = null }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
     }
 }

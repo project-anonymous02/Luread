@@ -17,6 +17,7 @@
     <!-- Aksi -->
     <string name="action_retry">Retry</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_save">Save</string>
     <string name="action_copy">Copy</string>
     <string name="action_delete">Delete</string>
     <string name="action_see_all">See all</string>
@@ -145,7 +146,10 @@
     <string name="library_filter_downloaded">Offline</string>
     <string name="library_filter_finished">Finished</string>
     <string name="library_filter_favorite">Favorites</string>
+    <string name="library_filter_collection">Collection</string>
     <string name="library_search_hint">Search library…</string>
+    <string name="library_assign_collection">Collection…</string>
+    <string name="library_collection_hint">Collection name</string>
     <string name="library_sort_added_desc">Newest</string>
     <string name="library_sort_added_asc">Oldest</string>
     <string name="library_sort_title_asc">Title A→Z</string>

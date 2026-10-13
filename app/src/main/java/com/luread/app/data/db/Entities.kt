@@ -44,6 +44,8 @@ data class BookEntity(
     val favorite: Boolean = false,
     val addedAt: Long = 0L,
     val lastOpenedAt: Long = 0L,
+    /** Nama rak/koleksi kustom (null = tanpa koleksi). */
+    val collectionName: String? = null,
 ) {
     enum class DownloadState { NONE, QUEUED, RUNNING, DONE, FAILED }
 }

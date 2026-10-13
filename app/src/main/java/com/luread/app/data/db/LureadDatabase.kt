@@ -8,14 +8,15 @@ import androidx.room.RoomDatabase
 /**
  * Database lokal Luread.
  *
- * Skema versi 2 (kunci buku String); versi 1 belum pernah dirilis sehingga
- * migrasi destruktif (hapus semua tabel) dipilih sengaja untuk prrilis. Ekspor skema aktif (`room.schemaLocation`)
- * supaya perubahan skema berikutnya bisa dibandingkan oleh Room dan diverifikasi
+ * Skema versi 3 (kunci buku String + collectionName); versi 1–2 belum pernah
+ * dirilis ke publik sehingga migrasi destruktif (hapus semua tabel) dipilih
+ * sengaja untuk prrilis. Ekspor skema aktif (`room.schemaLocation`) supaya
+ * perubahan skema berikutnya bisa dibandingkan oleh Room dan diverifikasi
  * di CI (docs/testing.md).
  */
 @Database(
     entities = [BookEntity::class, SessionEntity::class, AnnotationEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class LureadDatabase : RoomDatabase() {

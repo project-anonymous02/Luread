@@ -87,6 +87,10 @@ class LibraryRepository(
 
     suspend fun setFavorite(id: String, favorite: Boolean) = books.setFavorite(id, favorite)
 
+    suspend fun setCollection(id: String, collection: String?) = books.setCollection(id, collection?.trim()?.takeIf { it.isNotEmpty() })
+
+    fun observeCollectionNames(): Flow<List<String>> = books.observeCollectionNames()
+
     suspend fun updateDownloadState(id: String, state: BookEntity.DownloadState, done: Long = 0L, total: Long = 0L) =
         books.updateDownload(id, state.name, done, total)
 

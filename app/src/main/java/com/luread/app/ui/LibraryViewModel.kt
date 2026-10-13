@@ -30,6 +30,7 @@ class LibraryViewModel(
         DOWNLOADED(R.string.library_filter_downloaded),
         FINISHED(R.string.library_filter_finished),
         FAVORITE(R.string.library_filter_favorite),
+        COLLECTION(R.string.library_filter_collection),
     }
 
     enum class Sort(@StringRes val labelRes: Int) {
@@ -50,16 +51,29 @@ class LibraryViewModel(
     private val searchQuery = MutableStateFlow("")
     val searchState: StateFlow<String> = searchQuery
 
+    private val collectionFilter = MutableStateFlow<String?>(null)
+    val collectionFilterState: StateFlow<String?> = collectionFilter
+
+    val collectionNames: StateFlow<List<String>> = library.observeCollectionNames()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message
 
     val books: StateFlow<List<BookEntity>> =
-        combine(library.observeLibrary(), filter, sort, searchQuery) { list, selected, sortBy, query ->
+        combine(
+            library.observeLibrary(),
+            filter,
+            sort,
+            searchQuery,
+            collectionFilter,
+        ) { list, selected, sortBy, query, collection ->
             val filtered = when (selected) {
                 Filter.ALL -> list
                 Filter.DOWNLOADED -> list.filter { it.localPath != null }
                 Filter.FINISHED -> list.filter { it.finished }
                 Filter.FAVORITE -> list.filter { it.favorite }
+                Filter.COLLECTION -> list.filter { it.collectionName == collection }
             }
             val searched = if (query.isBlank()) filtered else filtered.filter { book ->
                 book.title.contains(query, ignoreCase = true) ||
@@ -93,6 +107,14 @@ class LibraryViewModel(
 
     fun onSearchChange(text: String) {
         searchQuery.value = text
+    }
+
+    fun setCollectionFilter(name: String?) {
+        collectionFilter.value = name
+    }
+
+    fun assignCollection(id: String, name: String?) {
+        viewModelScope.launch { library.setCollection(id, name) }
     }
 
     fun dismissMessage() {
