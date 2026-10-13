@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 class HomeViewModel(
     private val library: LibraryRepository,
     private val catalog: CatalogRepository,
-    private val manga: MangaRepository,
+    private val mangaRepo: MangaRepository,
 ) : ViewModel() {
 
     val continueReading: StateFlow<List<BookCard>> = library.observeLibrary()
@@ -138,7 +138,7 @@ class HomeViewModel(
         }
         viewModelScope.launch {
             // Manga populer dari MangaDex (tanpa key).
-            when (val result = manga.popular()) {
+            when (val result = mangaRepo.popular()) {
                 is ApiResult.Success -> _manga.value = MangaListUi.Content(result.value.results)
                 is ApiResult.Failure -> _manga.value = MangaListUi.Error(result.error.toUserMessage())
             }

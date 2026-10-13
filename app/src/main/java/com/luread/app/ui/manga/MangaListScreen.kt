@@ -55,6 +55,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 
 /** Layar daftar manga (search + browse populer). */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MangaListScreen(onOpenManga: (String) -> Unit, onBack: () -> Unit) {
     val vm = appViewModel { MangaListViewModel(it.manga) }
