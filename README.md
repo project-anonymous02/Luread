@@ -2,7 +2,7 @@
 
 Perpustakaan digital pribadi & pembaca ebook untuk Android. Katalog gratis dari empat sumber tanpa akun dan tanpa API key: **Project Gutenberg** (Gutendex), **Open Library**, **Internet Archive**, dan **Wikisource Indonesia** — tanpa iklan/analitik. Data buku, catatan, dan statistik tinggal di perangkat.
 
-> **Status proyek (13 Okt 2026):** **CI GitHub Actions hijau** (run [`38326003012`](https://github.com/project-anonymous02/Luread/actions/runs/38326003012), commit `1dcdba8`): pemeriksaan statis lolos, **35 unit test lulus**, dan `assembleDebug` menghasilkan artifact `luread-debug-apk` (~33 MB) + `test-reports`. Kompilasi Kotlin/Room KSP/Readium terverifikasi di CI. Yang **belum** diuji: runtime di perangkat/emulator (tidak ada perangkat di lingkungan ini). Dokumen fitur: `docs/feature-matrix.md`.
+> **Status proyek (13 Okt 2026):** **CI GitHub Actions hijau** (run [`38356731098`](https://github.com/project-anonymous02/Luread/actions/runs/38356731098), commit `e60e6ea`): pemeriksaan statis lolos, **72 unit test lulus**, dan `assembleDebug` menghasilkan artifact `luread-debug-apk` (~33 MB) + `test-reports`. Kompilasi Kotlin/Room KSP/Readium terverifikasi di CI. Yang **belum** diuji: runtime di perangkat/emulator (tidak ada perangkat di lingkungan ini). Dokumen fitur: `docs/feature-matrix.md`.
 
 ## Fitur yang ada
 

@@ -1,7 +1,7 @@
 # Feature Matrix — Luread
 
 Tanggal: 13 Oktober 2026. Status mengikuti definisi di `docs/research.md`.
-Paling penting: **"Implemented" ≠ "Tested"**. *Tested* = unit test lulus di CI (35/35, run `38326003012`) + pemeriksaan statis + **kompilasi sukses di CI**. Tidak ada fitur yang diuji pada perangkat; jalur runtime (Readium/PDF/WebView/unduhan) tetap *Implemented, Not Tested on device* meski kompilasi terverifikasi.
+Paling penting: **"Implemented" ≠ "Tested"**. *Tested* = unit test lulus di CI (72/72, run `38356731098`) + pemeriksaan statis + **kompilasi sukses di CI**. Tidak ada fitur yang diuji pada perangkat; jalur runtime (Readium/PDF/WebView/unduhan) tetap *Implemented, Not Tested on device* meski kompilasi terverifikasi.
 
 Legenda: `V` Verified (sumber/audit), `I` Implemented (kode ada), `IT` Implemented-Not-Tested, `P` Planned (belum dibuat), `—` tidak berlaku.
 
@@ -142,8 +142,8 @@ Penting: waktu hanya dihitung ketika sesi benar-benar diamati aplikasi (masuk re
 | Item | Status |
 | --- | --- |
 | Gradle wrapper resmi 9.6.0 | V (file dari tag resmi; dicek `verify.py`) |
-| Workflow CI (push/PR/manual), unit test, assembleDebug, upload artifact | V (hijau di run `38326003012`) |
-| Unit test (parsing, format, paginasi TXT, codec lokasi, URL, pesan error) | V (35/35 lulus di CI) |
+| Workflow CI (push/PR/manual), unit test, assembleDebug, upload artifact | V (hijau di run `38356731098`) |
+| Unit test (parsing, format, paginasi TXT, codec lokasi, URL multi-sumber, pesan error, HTML strip) | V (72/72 lulus di CI) |
 | AndroidTest / instrumentasi | **Tidak dibuat** (keputusan eksplisit: tidak ada emulator; folder sengaja tidak dibuat kosong) |
 | Logo resmi | I | `image/logo.png` (isi JPEG 512×512) divalidasi magic byte oleh `:app:integrateLogo`, disalin ke `res/drawable-nodpi/logo.*`, dipakai sebagai `android:icon`. Build gagal bila file hilang/rusak |
 | R8/ProGuard release | Dinonaktifkan sengaja (belum terverifikasi) |

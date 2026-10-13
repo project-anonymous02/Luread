@@ -8,8 +8,8 @@ Tanggal: 13 Oktober 2026.
 | --- | --- |
 | Pemeriksaan statis lokal (`scripts/verify.py`) | **Dijalankan, lolos: 0 masalah, 0 peringatan** |
 | Build lokal (toolchain PRoot, lihat §2) | **Berhasil** untuk `testDebugUnitTest` (juga `compileDebugKotlin`); `assembleDebug` dihentikan di tengah (proses dex berat di RAM sempit) — APK dibangun CI |
-| Kompilasi Kotlin / `assembleDebug` | **Lulus di CI** (run `38326003012`, commit `1dcdba8`) |
-| Unit test (`./gradlew testDebugUnitTest`) | **Lulus lokal: 72/72** (CI sebelumnya 35/35, run `38326003012`) |
+| Kompilasi Kotlin / `assembleDebug` | **Lulus di CI** (run `38356731098`, commit `e60e6ea`) |
+| Unit test (`./gradlew testDebugUnitTest`) | **Lulus di CI: 72/72** (run `38356731098`) |
 | Lint Android (`./gradlew lint`) | **Tidak dijalankan** (belum ditambahkan ke CI) |
 | Uji di perangkat/emulator | **Tidak ada** perangkat/emulator di lingkungan ini |
 | GitHub Actions | **Hijau** — static-checks + Unit tests sukses; artifact `luread-debug-apk` (~33 MB) & `test-reports` terbit |
@@ -58,7 +58,7 @@ Hasil terakhir: **Lolos: 0 masalah, 0 peringatan.**
 
 > Pemeriksaan ini **bukan** pengganti kompilasi (kompilasi dijalankan CI); ia menangkap kelas kesalahan tertentu lebih cepat.
 
-## 4. Unit test yang ditulis — 72/72 lulus (lokal; angka CI diperbarui setelah run terakhir)
+## 4. Unit test yang ditulis — 72/72 lulus di CI (run `38356731098`)
 
 | Berkas | Yang diuji |
 | --- | --- |
