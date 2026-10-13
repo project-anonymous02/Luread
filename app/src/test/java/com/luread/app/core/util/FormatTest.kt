@@ -22,7 +22,7 @@ class FormatTest {
         assertEquals("512 B", Format.bytes(512))
         assertEquals("1 KB", Format.bytes(1024))
         assertEquals("1.5 MB", Format.bytes((1.5 * 1024 * 1024).toLong()))
-        assertEquals("24 MB", Format.bytes(24_836_548L))
+        assertEquals("23.7 MB", Format.bytes(24_836_548L))
     }
 
     @Test

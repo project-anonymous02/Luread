@@ -10,21 +10,21 @@ class CatalogErrorTest {
         val network = ApiErrorShim.network().toUserMessage()
         val timeout = ApiErrorShim.timeout().toUserMessage()
 
-        assertTrue(network.contains("koneksi"))
-        assertTrue(timeout.contains("Coba lagi"))
+        assertTrue(network.contains("internet connection"))
+        assertTrue(timeout.contains("Try again"))
     }
 
     @Test
     fun `http 503 diberi pesan khusus karena teramati di audit`() {
         val message = ApiErrorShim.http503().toUserMessage()
         assertTrue(message.contains("503"))
-        assertTrue(message.contains("sibuk"))
+        assertTrue(message.contains("busy"))
     }
 
     @Test
     fun `respons non json menyatakan gangguan server`() {
         val message = ApiErrorShim.notJson().toUserMessage()
-        assertTrue(message.contains("tidak valid"))
+        assertTrue(message.contains("not valid"))
     }
 }
 
