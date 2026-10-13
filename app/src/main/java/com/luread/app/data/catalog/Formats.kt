@@ -19,16 +19,28 @@ object Formats {
     const val MIME_TEXT = "text/plain"
     const val MIME_PDF = "application/pdf"
     const val MIME_MOBI = "application/x-mobipocket-ebook"
+    const val MIME_FB2 = "application/xml-fiction-book"
+    const val MIME_CBZ = "application/vnd.comicbook+zip"
+    const val MIME_DJVU = "image/vnd.djvu"
+    const val MIME_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    const val MIME_RTF = "application/rtf"
+    const val MIME_MARKDOWN = "text/markdown"
     const val MIME_JPEG = "image/jpeg"
     const val MIME_RDF = "application/rdf+xml"
     const val MIME_OCTET_STREAM = "application/octet-stream"
 
-    /** Format yang bisa dibaca Luread, terurut dari yang paling disukai. */
+    /**
+     * Format yang bisa dibaca Luread (punya reader engine), terurut dari yang paling disukai.
+     * MOBI/FB2/DJVU/DOCX/RTF/MD saat ini hanya bisa diunduh (tidak ada reader engine) —
+     * ditandai readable=false di [AvailableFormat] agar jujur kepada pengguna.
+     * CBZ punya reader gambar sendiri (CbzReader).
+     */
     enum class Readable(val mime: String, val label: String, val extension: String) {
         EPUB(MIME_EPUB, "EPUB", "epub"),
         HTML(MIME_HTML, "HTML", "html"),
         TEXT(MIME_TEXT, "Plain text", "txt"),
         PDF(MIME_PDF, "PDF", "pdf"),
+        CBZ(MIME_CBZ, "Comic Book (CBZ)", "cbz"),
     }
 
     data class AvailableFormat(
@@ -92,19 +104,33 @@ object Formats {
         MIME_HTML -> "html"
         MIME_TEXT -> "txt"
         MIME_MOBI -> "mobi"
+        MIME_FB2 -> "fb2"
+        MIME_CBZ -> "cbz"
+        MIME_DJVU -> "djvu"
+        MIME_DOCX -> "docx"
+        MIME_RTF -> "rtf"
+        MIME_MARKDOWN -> "md"
         else -> "bin"
     }
 
     private fun labelFor(mime: String): String = when (normalizeMime(mime)) {
         MIME_RDF -> "RDF metadata"
         MIME_MOBI -> "MOBI"
+        MIME_FB2 -> "Fiction Book 2"
+        MIME_CBZ -> "Comic Book ZIP"
+        MIME_DJVU -> "DjVu"
+        MIME_DOCX -> "Word document"
+        MIME_RTF -> "Rich Text Format"
+        MIME_MARKDOWN -> "Markdown"
         MIME_JPEG -> "Cover"
         MIME_OCTET_STREAM -> "Archive"
         "audio/mpeg" -> "Audio (MP3)"
         "audio/ogg" -> "Audio (OGG)"
         "audio/mp4" -> "Audio (M4A)"
-        "application/msword" -> "Word document"
+        "application/msword" -> "Word document (legacy)"
         "text/x-rst" -> "reStructuredText"
+        "application/zip" -> "ZIP archive"
+        "application/x-cbz" -> "Comic Book ZIP"
         else -> normalizeMime(mime).substringAfterLast('/')
     }
 
@@ -120,6 +146,27 @@ object Formats {
             val isPdf = head[0] == '%'.code.toByte() && head[1] == 'P'.code.toByte() &&
                 head[2] == 'D'.code.toByte() && head[3] == 'F'.code.toByte()
             if (isPdf) return MIME_PDF
+        }
+        if (head.size >= 8) {
+            // MOBI: bytes 60..67 biasanya "BOOKMOBI" atau "TEXtREAd"
+            if (head.size >= 68) {
+                val tag = String(head, 60, 8, Charsets.US_ASCII)
+                if (tag == "BOOKMOBI" || tag == "TEXtREAd") return MIME_MOBI
+            }
+            // FB2: file diawali "<?xml" lalu "<FictionBook"
+            if (head[0] == '<'.code.toByte()) {
+                val headStr = String(head, Charsets.US_ASCII)
+                if (headStr.contains("FictionBook")) return MIME_FB2
+            }
+            // DjVu: "AT&TFORM"
+            if (String(head, 0, 8, Charsets.US_ASCII) == "AT&TFORM") return MIME_DJVU
+            // RTF: "{\rtf"
+            if (head[0] == '{'.code.toByte() && head[1] == '\\'.code.toByte() &&
+                head[2] == 'r'.code.toByte() && head[3] == 't'.code.toByte() &&
+                head[4] == 'f'.code.toByte()
+            ) {
+                return MIME_RTF
+            }
         }
         return null
     }

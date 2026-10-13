@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -83,10 +84,13 @@ fun ReaderScreen(
     val progress by vm.progress.collectAsStateWithLifecycle()
     val annotations by vm.annotationList.collectAsStateWithLifecycle()
     val message by vm.message.collectAsStateWithLifecycle()
+    val translateState by vm.translate.collectAsStateWithLifecycle()
+    val cbzImages by vm.cbzImages.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var showAnnotations by rememberSaveable { mutableStateOf(false) }
+    var showTranslateSheet by rememberSaveable { mutableStateOf(false) }
 
     DisposableEffect(Unit) {
         onDispose { vm.onLeave() }
@@ -150,6 +154,12 @@ fun ReaderScreen(
                         onPage = vm::onProgressPage,
                     )
 
+                    ReaderViewModel.Mode.CBZ -> com.luread.app.ui.reader.CbzReader(
+                        imagePaths = cbzImages,
+                        startPage = vm.savedPage(),
+                        onPage = vm::onProgressPage,
+                    )
+
                     ReaderViewModel.Mode.HTML -> HtmlReader(
                         path = book.localPath.orEmpty(),
                         fontSp = settings.clampedFontSize,
@@ -203,13 +213,27 @@ fun ReaderScreen(
                                     Icon(Icons.Outlined.Bookmark, contentDescription = null)
                                 }
                                 IconButton(onClick = {
-                                    scope.launch {
-                                        val selected = epubReady?.state?.let { selectedEpubText(it) }
-                                        val text = selected?.text.orEmpty()
-                                        if (text.isBlank()) {
+                                    // Auto-translate inline: EPUB -> teks terpilih;
+                                    // TEXT -> halaman saat ini.
+                                    when (state.mode) {
+                                        ReaderViewModel.Mode.EPUB -> {
+                                            scope.launch {
+                                                val selected = epubReady?.state?.let { selectedEpubText(it) }
+                                                val text = selected?.text.orEmpty()
+                                                if (text.isBlank()) {
+                                                    vm.notify(context.getString(R.string.reader_select_text_hint))
+                                                } else {
+                                                    vm.translateInline(text)
+                                                    showTranslateSheet = true
+                                                }
+                                            }
+                                        }
+                                        ReaderViewModel.Mode.TEXT -> {
+                                            vm.translateCurrentTextPage()
+                                            showTranslateSheet = true
+                                        }
+                                        else -> {
                                             vm.notify(context.getString(R.string.reader_select_text_hint))
-                                        } else {
-                                            onTranslate(text)
                                         }
                                     }
                                 }) {
@@ -274,6 +298,16 @@ fun ReaderScreen(
                     onDelete = vm::deleteAnnotation,
                 )
             }
+
+            if (showTranslateSheet) {
+                TranslateSheet(
+                    state = translateState,
+                    onClose = {
+                        showTranslateSheet = false
+                        vm.clearTranslate()
+                    },
+                )
+            }
         }
     }
 }
@@ -308,6 +342,75 @@ private fun ReaderTopBar(
                 .padding(horizontal = 4.dp),
         )
         actions()
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TranslateSheet(
+    state: ReaderViewModel.TranslateUi,
+    onClose: () -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onClose) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(Sm),
+        ) {
+            Text(
+                text = stringResource(R.string.translator_result),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            when (state) {
+                is ReaderViewModel.TranslateUi.Idle -> {}
+                is ReaderViewModel.TranslateUi.Loading -> {
+                    androidx.compose.material3.CircularProgressIndicator()
+                }
+                is ReaderViewModel.TranslateUi.Done -> {
+                    if (state.lang != null) {
+                        Text(
+                            text = "Detected: ${state.lang} → id",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Text(
+                        text = state.original,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Text(
+                        text = state.translated,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = Sm),
+                    )
+                    val ctx = LocalContext.current
+                    OutlinedButton(onClick = {
+                        val clipboard = ctx.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
+                            as android.content.ClipboardManager
+                        clipboard.setPrimaryClip(
+                            android.content.ClipData.newPlainText("Luread", state.translated),
+                        )
+                    }, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.action_copy))
+                    }
+                }
+                is ReaderViewModel.TranslateUi.Failed -> {
+                    Text(
+                        text = state.message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+        }
+        Box(modifier = Modifier.padding(bottom = 16.dp))
     }
 }
 

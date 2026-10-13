@@ -40,8 +40,11 @@ class AppContainer(context: Context) {
             openLibrary = OpenLibraryApi(httpClient),
             archive = ArchiveApi(httpClient),
             wikisource = WikisourceApi(httpClient),
+            wikibooks = WikisourceApi(httpClient, baseUrl = WikisourceApi.WIKIBOOKS_BASE_URL),
         )
     }
+
+    val translator by lazy { com.luread.app.data.translate.TranslationService(httpClient) }
 
     val database by lazy { LureadDatabase.get(appContext) }
 

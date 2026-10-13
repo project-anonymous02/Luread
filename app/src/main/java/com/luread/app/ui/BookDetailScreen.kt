@@ -138,7 +138,7 @@ private fun DetailContent(
                         ProgressLine(progress = state.progress)
                         Text(
                             text = Format.percent(state.progress) +
-                                if (state.finished) " · selesai" else "",
+                                if (state.finished) " · " + stringResource(R.string.detail_finished) else "",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary,
                         )

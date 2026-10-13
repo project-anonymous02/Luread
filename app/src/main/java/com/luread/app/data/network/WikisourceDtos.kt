@@ -50,14 +50,13 @@ data class WikisourceParse(
     val title: String = "",
     val text: String = "",
 ) {
-    val canonicalUrl: String
-        get() = "https://id.wikisource.org/wiki/" +
-            title.replace(" ", "_").split("/").joinToString("/") { segment ->
-                java.net.URLEncoder.encode(segment, "UTF-8").replace("+", "%20")
-            }
+    fun canonicalUrl(baseUrl: String): String =
+        "$baseUrl/wiki/" + title.replace(" ", "_").split("/").joinToString("/") { segment ->
+            java.net.URLEncoder.encode(segment, "UTF-8").replace("+", "%20")
+        }
 
-    fun toItem(pageid: Long, summary: String?): CatalogItem = CatalogItem(
-        key = BookSource.WIKISOURCE.prefix + pageid,
+    fun toItem(pageid: Long, summary: String?, baseUrl: String, source: BookSource): CatalogItem = CatalogItem(
+        key = source.prefix + pageid,
         title = title,
         authors = emptyList(),
         summary = summary,
@@ -66,8 +65,8 @@ data class WikisourceParse(
         coverUrl = null,
         downloadCount = null,
         copyright = null,
-        source = BookSource.WIKISOURCE,
-        formats = mapOf(com.luread.app.data.catalog.Formats.MIME_HTML to canonicalUrl),
-        canonicalUrl = canonicalUrl,
+        source = source,
+        formats = mapOf(com.luread.app.data.catalog.Formats.MIME_HTML to canonicalUrl(baseUrl)),
+        canonicalUrl = canonicalUrl(baseUrl),
     )
 }

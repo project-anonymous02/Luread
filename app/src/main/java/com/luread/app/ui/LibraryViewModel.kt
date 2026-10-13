@@ -105,16 +105,31 @@ class LibraryViewModel(
                 head.copyOf(read)
             } ?: throw IllegalArgumentException(appContext.getString(R.string.import_error_open))
 
-            val sniffed = Formats.sniff(magic) ?: when (nameExt) {
-                "epub" -> Formats.MIME_EPUB
-                "pdf" -> Formats.MIME_PDF
-                "txt", "text" -> Formats.MIME_TEXT
-                "html", "htm" -> Formats.MIME_HTML
-                else -> throw IllegalArgumentException(
-                    appContext.getString(R.string.import_error_format, nameExt),
-                )
+            // Untuk CBZ/CBR, ekstensi menang atas sniff (keduanya ZIP).
+            val mime = when (nameExt) {
+                "cbz", "cbr" -> Formats.MIME_CBZ
+                else -> {
+                    val sniffed = Formats.sniff(magic) ?: when (nameExt) {
+                        "epub" -> Formats.MIME_EPUB
+                        "pdf" -> Formats.MIME_PDF
+                        "txt", "text" -> Formats.MIME_TEXT
+                        "html", "htm" -> Formats.MIME_HTML
+                        "mobi", "prc", "azw", "azw3" -> Formats.MIME_MOBI
+                        "fb2" -> Formats.MIME_FB2
+                        "djvu" -> Formats.MIME_DJVU
+                        "docx" -> Formats.MIME_DOCX
+                        "rtf" -> Formats.MIME_RTF
+                        "md", "markdown" -> Formats.MIME_MARKDOWN
+                        else -> throw IllegalArgumentException(
+                            appContext.getString(R.string.import_error_format, nameExt),
+                        )
+                    }
+                    when (sniffed) {
+                        Formats.EPUB_OR_ZIP -> Formats.MIME_EPUB
+                        else -> sniffed
+                    }
+                }
             }
-            val mime = if (sniffed == Formats.EPUB_OR_ZIP) Formats.MIME_EPUB else sniffed
 
             val dir = File(appContext.filesDir, "books").apply { mkdirs() }
             val target = File(dir, "${key.replace(':', '_')}.${Formats.extensionFor(mime)}")

@@ -123,9 +123,10 @@ fun LureadTopBar(
 }
 
 /**
- * Sampul buku. Cover dari Gutendex selalu berupa JPEG pada URL `formats`, jadi
+ * Sampul buku. Cover dari katalog selalu berupa JPEG pada URL `formats`, jadi
  * ketiadaan URL berarti memang tidak ada cover — ditampilkan kotak netral dengan
- * inisial judul, bukan gambar palsu.
+ * inisial judul, bukan gambar palsu. Bila URL ada tapi belum termuat atau gagal
+ * (offline, 404), inisial tetap terlihat di belakang AsyncImage sebagai fallback.
  */
 @Composable
 fun BookCover(
@@ -144,13 +145,14 @@ fun BookCover(
             .background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center,
     ) {
-        if (coverUrl.isNullOrBlank()) {
-            Text(
-                text = initials,
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-            )
-        } else {
+        // Inisial selalu dirender di belakang: terlihat ketika coverUrl null,
+        // belum termuat (Coil placeholder), atau error (Coil error).
+        Text(
+            text = initials,
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+        )
+        if (!coverUrl.isNullOrBlank()) {
             AsyncImage(
                 model = coverUrl,
                 contentDescription = "Book cover",

@@ -179,10 +179,16 @@ class DownloadManager(
 
             val head = readHead(temp)
             val sniffed = Formats.sniff(head)
-            // text/html dan text/plain tidak punya magic number, jadi wajar bila
-            // sniff gagal; yang penting berkas tidak kosong dan tipe yang terdeteksi
-            // bukan format yang tidak dikenal.
-            val ok = sniffed == null || sniffed == Formats.EPUB_OR_ZIP || sniffed == Formats.MIME_PDF
+            // text/html, text/plain, dan format lain tanpa magic number wajar
+            // bikin sniff gagal; yang penting berkas tidak kosong dan tipe yang
+            // terdeteksi bukan format yang tidak dikenal.
+            val ok = sniffed == null ||
+                sniffed == Formats.EPUB_OR_ZIP ||
+                sniffed == Formats.MIME_PDF ||
+                sniffed == Formats.MIME_MOBI ||
+                sniffed == Formats.MIME_FB2 ||
+                sniffed == Formats.MIME_DJVU ||
+                sniffed == Formats.MIME_RTF
             if (!ok) {
                 temp.delete()
                 throw DownloadException("Unrecognised file content (sniff=$sniffed)")
@@ -194,7 +200,9 @@ class DownloadManager(
                     temp.copyTo(target, overwrite = true)
                     temp.delete()
                 }
-                books.setLocalFile(bookId, target.absolutePath, sniffed ?: mime ?: Formats.MIME_EPUB, BookEntity.DownloadState.DONE.name)
+                // Utamakan mime yang dinyatakan pemanggil (lebih spesifik daripada
+                // sniff yang hanya bisa membedakan zip/pdf, bukan epub/zip/cbz).
+                books.setLocalFile(bookId, target.absolutePath, mime ?: sniffed ?: Formats.MIME_EPUB, BookEntity.DownloadState.DONE.name)
             }
             publish(bookId, BookEntity.DownloadState.DONE, done, total)
         } finally {

@@ -7,7 +7,8 @@ package com.luread.app.data.catalog
  *  * `gutenberg:1342`            -> Project Gutenberg lewat Gutendex;
  *  * `openlibrary:OL66554W`      -> Open Library (ID karya tanpa `/works/`);
  *  * `archive:prideprejudice..`  -> Internet Archive (identifier item);
- *  * `wikisource:33610`          -> Wikisource berbahasa Indonesia (pageid).
+ *  * `wikisource:33610`          -> Wikisource berbahasa Indonesia (pageid);
+ *  * `wikibooks:24258`           -> Wikibooks berbahasa Indonesia (pageid).
  *
  * Kunci pernah mengandung `/` tidak diizinkan karena nama berkas unduhan
  * dibentuk dari kunci (lihat DownloadManager.safeName).
@@ -16,7 +17,8 @@ enum class BookSource(val id: String) {
     GUTENDEX("gutenberg"),
     OPEN_LIBRARY("openlibrary"),
     INTERNET_ARCHIVE("archive"),
-    WIKISOURCE("wikisource");
+    WIKISOURCE("wikisource"),
+    WIKIBOOKS("wikibooks");
 
     val prefix: String
         get() = "$id:"

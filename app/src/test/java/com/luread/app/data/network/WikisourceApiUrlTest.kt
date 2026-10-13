@@ -15,7 +15,7 @@ class WikisourceApiUrlTest {
 
     @Test
     fun `pencarian memakai daftar pencarian namespace 0`() {
-        val url = WikisourceApi.searchUrl("cerita rakyat", 0)
+        val url = WikisourceApi.searchUrl(WikisourceApi.DEFAULT_BASE_URL, "cerita rakyat", 0)
         val map = params(url).toMap()
         assertTrue(url.startsWith("https://id.wikisource.org/w/api.php"))
         assertEquals("query", map["action"])
@@ -30,24 +30,24 @@ class WikisourceApiUrlTest {
 
     @Test
     fun `offset lanjutan dikirim hanya saat bukan halaman pertama`() {
-        val map = params(WikisourceApi.searchUrl("x", 20)).toMap()
+        val map = params(WikisourceApi.searchUrl(WikisourceApi.DEFAULT_BASE_URL, "x", 20)).toMap()
         assertEquals("20", map["sroffset"])
     }
 
     @Test
     fun `browse allpages memakai apcontinue untuk lanjutan`() {
-        val fresh = params(WikisourceApi.browseUrl(null)).toMap()
+        val fresh = params(WikisourceApi.browseUrl(WikisourceApi.DEFAULT_BASE_URL, null)).toMap()
         assertEquals("allpages", fresh["list"])
         assertEquals("20", fresh["aplimit"])
         assertTrue(!fresh.containsKey("apcontinue"))
 
-        val next = params(WikisourceApi.browseUrl("005b_Batak, Angkola")).toMap()
+        val next = params(WikisourceApi.browseUrl(WikisourceApi.DEFAULT_BASE_URL, "005b_Batak, Angkola")).toMap()
         assertEquals("005b_Batak, Angkola", next["apcontinue"])
     }
 
     @Test
     fun `parse meminta teks html berdasarkan pageid`() {
-        val map = params(WikisourceApi.parseUrl(33610)).toMap()
+        val map = params(WikisourceApi.parseUrl(WikisourceApi.DEFAULT_BASE_URL, 33610)).toMap()
         assertEquals("parse", map["action"])
         assertEquals("33610", map["pageid"])
         assertEquals("text", map["prop"])
@@ -65,5 +65,11 @@ class WikisourceApiUrlTest {
     @Test
     fun `escapeHtml menetralkan karakter html`() {
         assertEquals("a &amp; b &lt;c&gt;", WikisourceApi.escapeHtml("a & b <c>"))
+    }
+
+    @Test
+    fun `wikibooks memakai base url sendiri`() {
+        val url = WikisourceApi.searchUrl(WikisourceApi.WIKIBOOKS_BASE_URL, "indonesia", 0)
+        assertTrue(url.startsWith("https://id.wikibooks.org/w/api.php"))
     }
 }

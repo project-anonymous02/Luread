@@ -42,6 +42,7 @@ class CatalogRepository(
     private val openLibrary: OpenLibraryApi,
     private val archive: ArchiveApi,
     private val wikisource: WikisourceApi,
+    private val wikibooks: WikisourceApi? = null,
     private val maxRetries: Int = 2,
     private val baseDelayMs: Long = 400L,
 ) {
@@ -83,7 +84,10 @@ class CatalogRepository(
                 }
             }
 
-            BookSource.WIKISOURCE -> wikisourceFirst(query)
+            BookSource.WIKISOURCE -> wikisourceFirst(query, BookSource.WIKISOURCE, wikisource)
+
+            BookSource.WIKIBOOKS -> wikibooks?.let { wikisourceFirst(query, BookSource.WIKIBOOKS, it) }
+                ?: ApiResult.Failure(ApiError.NotFound("Wikibooks not available"))
         }
     }
 
@@ -130,7 +134,10 @@ class CatalogRepository(
                 }
             }
 
-            BookSource.WIKISOURCE -> wikisourceNext(cursor, query)
+            BookSource.WIKISOURCE -> wikisourceNext(cursor, query, BookSource.WIKISOURCE, wikisource)
+
+            BookSource.WIKIBOOKS -> wikibooks?.let { wikisourceNext(cursor, query, BookSource.WIKIBOOKS, it) }
+                ?: ApiResult.Failure(ApiError.NotFound("Wikibooks not available"))
         }
     }
 
@@ -152,7 +159,9 @@ class CatalogRepository(
             BookSource.GUTENDEX -> gutenbergDetail(key)
             BookSource.OPEN_LIBRARY -> openLibraryDetail(key)
             BookSource.INTERNET_ARCHIVE -> archiveDetail(key)
-            BookSource.WIKISOURCE -> wikisourceDetail(key)
+            BookSource.WIKISOURCE -> wikisourceDetail(key, BookSource.WIKISOURCE, wikisource)
+            BookSource.WIKIBOOKS -> wikibooks?.let { wikisourceDetail(key, BookSource.WIKIBOOKS, it) }
+                ?: ApiResult.Failure(ApiError.NotFound("Wikibooks not available"))
         }
     }
 
@@ -246,15 +255,22 @@ class CatalogRepository(
         }
     }
 
-    private suspend fun wikisourceDetail(key: String): ApiResult<CatalogDetail> {
-        val pageid = BookSource.WIKISOURCE.remoteIdOf(key)?.toLongOrNull()
+    private suspend fun wikisourceDetail(
+        key: String,
+        source: BookSource,
+        api: WikisourceApi?,
+    ): ApiResult<CatalogDetail> {
+        if (api == null) return ApiResult.Failure(ApiError.NotFound("Source not available"))
+        val pageid = source.remoteIdOf(key)?.toLongOrNull()
             ?: return ApiResult.Failure(ApiError.NotFound("Unrecognised book key: $key"))
-        return when (val r = wikisource.parse(pageid)) {
+        return when (val r = api.parse(pageid)) {
             is ApiResult.Failure -> r
             is ApiResult.Success -> {
                 val summary = HtmlStrip.toText(r.value.text).take(400)
                 val wrapped = WikisourceApi.wrapDocument(r.value.title, r.value.text)
-                ApiResult.Success(CatalogDetail(r.value.toItem(pageid, summary), payload = wrapped))
+                val baseUrl = if (source == BookSource.WIKIBOOKS) WikisourceApi.WIKIBOOKS_BASE_URL
+                    else WikisourceApi.DEFAULT_BASE_URL
+                ApiResult.Success(CatalogDetail(r.value.toItem(pageid, summary, baseUrl, source), payload = wrapped))
             }
         }
     }
@@ -263,47 +279,61 @@ class CatalogRepository(
     // Wikisource: pencarian vs browse + kursor
     // ------------------------------------------------------------------
 
-    private suspend fun wikisourceFirst(query: CatalogQuery): ApiResult<CatalogPage> {
+    private suspend fun wikisourceFirst(
+        query: CatalogQuery,
+        source: BookSource,
+        api: WikisourceApi?,
+    ): ApiResult<CatalogPage> {
+        if (api == null) return ApiResult.Failure(ApiError.NotFound("Source not available"))
         val term = query.search?.trim()
         return if (term.isNullOrEmpty()) {
-            when (val r = wikisource.browse(null)) {
+            when (val r = api.browse(null)) {
                 is ApiResult.Failure -> r
-                is ApiResult.Success -> ApiResult.Success(wikisourcePage(r.value, browsing = true))
+                is ApiResult.Success -> ApiResult.Success(wikisourcePage(r.value, browsing = true, source))
             }
         } else {
-            when (val r = wikisource.search(term, 0)) {
+            when (val r = api.search(term, 0)) {
                 is ApiResult.Failure -> r
-                is ApiResult.Success -> ApiResult.Success(wikisourcePage(r.value, browsing = false))
+                is ApiResult.Success -> ApiResult.Success(wikisourcePage(r.value, browsing = false, source))
             }
         }
     }
 
-    private suspend fun wikisourceNext(cursor: String, query: CatalogQuery): ApiResult<CatalogPage> =
-        when {
-            cursor.startsWith("browse:") -> when (val r = wikisource.browse(cursor.removePrefix("browse:"))) {
+    private suspend fun wikisourceNext(
+        cursor: String,
+        query: CatalogQuery,
+        source: BookSource,
+        api: WikisourceApi?,
+    ): ApiResult<CatalogPage> {
+        if (api == null) return ApiResult.Failure(ApiError.NotFound("Source not available"))
+        return when {
+            cursor.startsWith("browse:") -> when (val r = api.browse(cursor.removePrefix("browse:"))) {
                 is ApiResult.Failure -> r
-                is ApiResult.Success -> ApiResult.Success(wikisourcePage(r.value, browsing = true))
+                is ApiResult.Success -> ApiResult.Success(wikisourcePage(r.value, browsing = true, source))
             }
 
             cursor.startsWith("search:") -> {
                 val term = query.search?.trim().orEmpty()
                 val offset = cursor.removePrefix("search:").toIntOrNull() ?: 0
-                when (val r = wikisource.search(term, offset)) {
+                when (val r = api.search(term, offset)) {
                     is ApiResult.Failure -> r
-                    is ApiResult.Success -> ApiResult.Success(wikisourcePage(r.value, browsing = false))
+                    is ApiResult.Success -> ApiResult.Success(wikisourcePage(r.value, browsing = false, source))
                 }
             }
 
-            else -> ApiResult.Failure(ApiError.InvalidUrl("Unknown wikisource cursor"))
+            else -> ApiResult.Failure(ApiError.InvalidUrl("Unknown cursor"))
         }
+    }
 
-    private fun wikisourcePage(response: WikisourceSearchResponse, browsing: Boolean): CatalogPage {
+    private fun wikisourcePage(response: WikisourceSearchResponse, browsing: Boolean, source: BookSource): CatalogPage {
         val data = response.query ?: return CatalogPage(emptyList())
         val hits = if (browsing) data.allpages else data.search
+        val baseUrl = if (source == BookSource.WIKIBOOKS) WikisourceApi.WIKIBOOKS_BASE_URL
+            else WikisourceApi.DEFAULT_BASE_URL
         val results = hits.map { hit ->
-            val pageUrl = "https://id.wikisource.org/wiki/" + hit.title.replace(" ", "_")
+            val pageUrl = "$baseUrl/wiki/" + hit.title.replace(" ", "_")
             CatalogItem(
-                key = BookSource.WIKISOURCE.prefix + hit.pageid,
+                key = source.prefix + hit.pageid,
                 title = hit.title,
                 authors = emptyList(),
                 summary = null,
@@ -312,7 +342,7 @@ class CatalogRepository(
                 coverUrl = null,
                 downloadCount = null,
                 copyright = null,
-                source = BookSource.WIKISOURCE,
+                source = source,
                 formats = mapOf(Formats.MIME_HTML to pageUrl),
                 canonicalUrl = pageUrl,
             )

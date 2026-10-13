@@ -58,6 +58,7 @@
     <string name="filter_source_openlibrary">Open Library</string>
     <string name="filter_source_archive">Internet Archive</string>
     <string name="filter_source_wikisource">Wikisource</string>
+    <string name="filter_source_wikibooks">Wikibooks</string>
     <string name="library_empty_title">Library is empty</string>
     <string name="library_empty_subtitle">No books match this filter. Add some from Discover or import your own files.</string>
     <string name="library_count">%1$d books</string>
@@ -70,7 +71,7 @@
 
     <!-- Impor file -->
     <string name="import_error_open">The file could not be opened.</string>
-    <string name="import_error_format">Format \'%1$s\' is not supported. Choose EPUB, PDF, HTML, or TXT.</string>
+    <string name="import_error_format">Format \'%1$s\' is not supported. Choose EPUB, PDF, HTML, TXT, MOBI, FB2, CBZ, RTF, or Markdown.</string>
     <string name="import_error_copy">The file could not be copied.</string>
     <string name="import_error_empty">The source file is empty.</string>
     <string name="import_added">Added \'%1$s\' to your library.</string>
@@ -83,9 +84,10 @@
     <string name="activity_history">Session history</string>
 
     <!-- Home -->
-    <string name="home_tagline">Gutenberg, Open Library, Internet Archive, Wikisource — no account, works offline.</string>
+    <string name="home_tagline">Gutenberg, Open Library, Internet Archive, Wikisource, Wikibooks — no account, works offline.</string>
     <string name="home_continue">Continue reading</string>
     <string name="home_featured">Featured from the catalogue</string>
+    <string name="home_indonesian">Cerita &amp; Buku Indonesia</string>
     <string name="home_recent">Recently added</string>
     <string name="home_empty_subtitle">Add books from Discover, or import your own EPUB/PDF/TXT files.</string>
     <string name="home_stat_library">%1$d in your library</string>
@@ -108,6 +110,7 @@
     <string name="detail_format_metadata_only">Metadata only</string>
     <string name="detail_source_note">Source: Project Gutenberg via Gutendex. Copyright status follows each book.</string>
     <string name="detail_book_unavailable">Book is not available.</string>
+    <string name="detail_finished">selesai</string>
 
     <!-- Reader -->
     <string name="reader_error_title">Cannot open this book</string>
@@ -154,21 +157,21 @@
     <string name="settings_translator_hint">Translate pasted text with any translation app installed on this device.</string>
     <string name="settings_font_size">Text size: %1$d sp</string>
     <string name="settings_version">Luread 0.1.0</string>
-    <string name="settings_about_body">Luread reads public-domain books from Project Gutenberg through the Gutendex catalogue. Books, notes and statistics stay on this device; no account is required.</string>
+    <string name="settings_about_title">Tentang Luread</string>
+    <string name="settings_about_body">Luread adalah aplikasi pembaca buku gratis tanpa akun, tanpa iklan, tanpa langganan. Buku diambil dari sumber-sumber publik gratis: Project Gutenberg (Gutendex), Open Library, Internet Archive, Wikisource Indonesia, dan Wikibooks Indonesia. Semua buku, catatan, penanda, dan statistik baca tetap tersimpan di perangkatmu; tidak ada data yang dikirim ke server mana pun kecuali saat mengunduh buku atau menerjemahkan teks.</string>
+    <string name="settings_about_sources">Fitur: baca EPUB, PDF, HTML, TXT, CBZ (komik); impor file lokal; terjemahan otomatis multi-provider; katalog multi-sumber dengan pencarian &amp; filter; mode gelap; penanda &amp; sorotan; statistik baca.</string>
+    <string name="settings_about_credits">Made by Nata — Pengganti PerpusKita (yang bukunya dikit, hehe).</string>
 
     <!-- Penerjemah -->
     <string name="translator_title">Translator</string>
-    <string name="translator_intro">Type or paste text below, then send it to a translation app installed on this device. Luread does not bundle its own translation engine.</string>
+    <string name="translator_intro_auto">Ketek atau tempel teks di bawah, lalu tekan Translate. Terjemahan otomatis memakai beberapa provider online (Google Translate unofficial + MyMemory) — bahasa sumber di-auto-detect.</string>
+    <string name="translator_target_lang">Target language</string>
+    <string name="translator_action_auto">Translate</string>
     <string name="translator_placeholder">Enter text to translate…</string>
-    <string name="translator_action">Translate with installed app</string>
     <string name="translator_clear">Clear</string>
     <string name="translator_result">Result</string>
-    <string name="translator_no_app_title">No translation app found</string>
-    <string name="translator_no_app_body">No installed app handles text translation on this device. Install a translation app and it will appear here.</string>
-    <string name="translator_footer">The output language follows the language settings of the translation app you choose.</string>
-    <string name="translator_cancelled">Translation was cancelled, or the app did not return a result.</string>
+    <string name="translator_footer">Hasil terjemahan dari Google Translate (unofficial) dan MyMemory. Kualitas terbaik untuk pasangan bahasa besar; bahasa kecil mungkin kurang akurat.</string>
     <string name="translator_enter_text">Enter some text first.</string>
-    <string name="translator_none_available">No translation app could be opened.</string>
 
     <!-- Aksesibilitas -->
     <string name="cd_back">Navigate back</string>

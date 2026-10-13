@@ -48,16 +48,25 @@ class HomeViewModel(
     private val _featured = MutableStateFlow<CatalogUiState>(CatalogUiState.Loading)
     val featured: StateFlow<CatalogUiState> = _featured
 
+    private val _indonesian = MutableStateFlow<CatalogUiState>(CatalogUiState.Loading)
+    val indonesian: StateFlow<CatalogUiState> = _indonesian
+
     init {
         refresh()
     }
 
     fun refresh() {
         _featured.value = CatalogUiState.Loading
+        _indonesian.value = CatalogUiState.Loading
         viewModelScope.launch {
             when (val result = catalog.firstPage(CatalogQuery())) {
                 is ApiResult.Success -> _featured.value = CatalogUiState.Content(result.value)
                 is ApiResult.Failure -> _featured.value = CatalogUiState.Error(result.error.toUserMessage())
+            }
+            // Section Indonesia: Wikisource (semua konten berbahasa Indonesia)
+            when (val result = catalog.firstPage(CatalogQuery(), source = com.luread.app.data.catalog.BookSource.WIKISOURCE)) {
+                is ApiResult.Success -> _indonesian.value = CatalogUiState.Content(result.value)
+                is ApiResult.Failure -> _indonesian.value = CatalogUiState.Error(result.error.toUserMessage())
             }
         }
     }

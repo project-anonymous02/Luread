@@ -64,7 +64,7 @@ class ReaderViewModel(
     private val container: AppContainer,
 ) : ViewModel() {
 
-    enum class Mode { EPUB, PDF, TEXT, HTML }
+    enum class Mode { EPUB, PDF, TEXT, HTML, CBZ }
 
     private val _ui = MutableStateFlow<ReaderUi>(ReaderUi.Loading)
     val ui: StateFlow<ReaderUi> = _ui.asStateFlow()
@@ -80,6 +80,19 @@ class ReaderViewModel(
 
     private val _progress = MutableStateFlow(0f)
     val progress: StateFlow<Float> = _progress.asStateFlow()
+
+    // ------------------------------------------------------------------
+    // Auto-translate state (inline, tanpa pindah layar)
+    // ------------------------------------------------------------------
+    sealed interface TranslateUi {
+        data object Idle : TranslateUi
+        data object Loading : TranslateUi
+        data class Done(val original: String, val translated: String, val lang: String?) : TranslateUi
+        data class Failed(val message: String) : TranslateUi
+    }
+
+    private val _translate = MutableStateFlow<TranslateUi>(TranslateUi.Idle)
+    val translate: StateFlow<TranslateUi> = _translate.asStateFlow()
 
     val settings: StateFlow<UserSettings> = container.settings.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UserSettings())
@@ -118,6 +131,7 @@ class ReaderViewModel(
 
             when (mode) {
                 Mode.EPUB -> openEpub(loaded)
+                Mode.CBZ -> openCbz(loaded)
                 Mode.TEXT -> loadText(loaded)
                 else -> Unit
             }
@@ -135,11 +149,64 @@ class ReaderViewModel(
         val contentType = target.contentType.orEmpty()
         return when {
             contentType == Formats.MIME_EPUB || path.endsWith(".epub", ignoreCase = true) -> Mode.EPUB
+            contentType == Formats.MIME_CBZ || path.endsWith(".cbz", ignoreCase = true) ||
+                path.endsWith(".cbr", ignoreCase = true) -> Mode.CBZ
             contentType == Formats.MIME_PDF || path.endsWith(".pdf", ignoreCase = true) -> Mode.PDF
             contentType == Formats.MIME_HTML ||
                 path.endsWith(".htm", ignoreCase = true) -> Mode.HTML
             else -> Mode.TEXT
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Auto-translate inline (tanpa pindah layar)
+    // ------------------------------------------------------------------
+
+    /**
+     * Terjemahkan [text] secara inline memakai TranslationService (failover
+     * Google gtx -> MyMemory). Hasil ditampilkan lewat [translate].
+     */
+    fun translateInline(text: String) {
+        if (text.isBlank()) {
+            _translate.value = TranslateUi.Failed(
+                container.appContext.getString(R.string.reader_select_text_hint),
+            )
+            return
+        }
+        _translate.value = TranslateUi.Loading
+        viewModelScope.launch {
+            // Target: bahasa Indonesia (default app); bisa dikembangkan jadi preferensi.
+            val target = "id"
+            when (val outcome = container.translator.translate(text, "auto", target)) {
+                is com.luread.app.data.translate.TranslationService.Outcome.Success -> {
+                    _translate.value = TranslateUi.Done(
+                        original = text,
+                        translated = outcome.result.translatedText,
+                        lang = outcome.result.detectedSourceLang,
+                    )
+                }
+                is com.luread.app.data.translate.TranslationService.Outcome.Failure -> {
+                    _translate.value = TranslateUi.Failed(outcome.message)
+                }
+            }
+        }
+    }
+
+    /** Ambil teks halaman yang sedang dibaca (mode TEXT) untuk diterjemahkan. */
+    fun translateCurrentTextPage() {
+        val page = savedPage()
+        val text = _pages.value.getOrNull(page)
+        if (text.isNullOrBlank()) {
+            _translate.value = TranslateUi.Failed(
+                container.appContext.getString(R.string.reader_select_text_hint),
+            )
+            return
+        }
+        translateInline(text)
+    }
+
+    fun clearTranslate() {
+        _translate.value = TranslateUi.Idle
     }
 
     // ------------------------------------------------------------------
@@ -223,6 +290,52 @@ class ReaderViewModel(
             )
         }
     }
+
+    /**
+     * CBZ/CBR (comic book ZIP/RAR): ekstrak gambar ke cache lalu tampilkan
+     * sebagai pager gambar. RAR tidak diekstrak (butuh library tambahan);
+     * hanya ZIP yang didukung.
+     */
+    private suspend fun openCbz(target: BookEntity) {
+        val path = target.localPath
+        if (path.isNullOrBlank()) {
+            _ui.value = ReaderUi.Failed(container.appContext.getString(R.string.reader_error_no_text_file))
+            return
+        }
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val cacheDir = java.io.File(container.appContext.cacheDir, "cbz_${bookId.hashCode()}")
+                cacheDir.mkdirs()
+                val existing = cacheDir.listFiles()?.filter {
+                    it.isFile && it.extension.lowercase() in setOf("jpg", "jpeg", "png", "webp", "gif")
+                }?.sortedBy { it.name }
+                if (existing != null && existing.isNotEmpty()) {
+                    _cbzImages.value = existing.map { it.absolutePath }
+                    return@withContext
+                }
+                java.util.zip.ZipFile(path).use { zip ->
+                    val entries = zip.entries().toList()
+                        .filter { !it.isDirectory && it.name.substringAfterLast('.').lowercase() in setOf("jpg", "jpeg", "png", "webp", "gif") }
+                        .sortedBy { it.name }
+                    entries.forEach { entry ->
+                        val out = java.io.File(cacheDir, entry.name.substringAfterLast('/'))
+                        zip.getInputStream(entry).use { input ->
+                            out.outputStream().use { output -> input.copyTo(output) }
+                        }
+                    }
+                    _cbzImages.value = entries.map { java.io.File(cacheDir, it.name.substringAfterLast('/')).absolutePath }
+                }
+            }.onFailure { error ->
+                if (error is CancellationException) throw error
+                _ui.value = ReaderUi.Failed(
+                    error.message ?: container.appContext.getString(R.string.reader_error_read_text),
+                )
+            }
+        }
+    }
+
+    private val _cbzImages = MutableStateFlow<List<String>>(emptyList())
+    val cbzImages: StateFlow<List<String>> = _cbzImages.asStateFlow()
 
     private fun readerPreferences(dark: Boolean, fontSp: Float): ReflowableWebPreferences {
         val base = if (dark) {

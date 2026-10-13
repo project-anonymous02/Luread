@@ -118,6 +118,44 @@ class FormatsTest {
     }
 
     @Test
+    fun `sniff mengenali mobi dari tag BOOKMOBI di offset 60`() {
+        val head = ByteArray(68)
+        //isi 60..67 dengan "BOOKMOBI"
+        val tag = "BOOKMOBI".toByteArray()
+        tag.copyInto(head, 60)
+        assertEquals(Formats.MIME_MOBI, Formats.sniff(head))
+    }
+
+    @Test
+    fun `sniff mengenali djvu dari AT and TFOrm`() {
+        val head = "AT&TFORM".toByteArray() + ByteArray(4)
+        assertEquals(Formats.MIME_DJVU, Formats.sniff(head))
+    }
+
+    @Test
+    fun `sniff mengenali rtf dari backslash rtf`() {
+        val head = "{\\rtf1".toByteArray() + ByteArray(4)
+        assertEquals(Formats.MIME_RTF, Formats.sniff(head))
+    }
+
+    @Test
+    fun `sniff mengenali fb2 dari tag FictionBook di awal`() {
+        val head = "<?xml version=\"1.0\"?><FictionBook".toByteArray()
+        assertEquals(Formats.MIME_FB2, Formats.sniff(head))
+    }
+
+    @Test
+    fun `extensionFor memetakan mime tambahan ke ekstensi yang benar`() {
+        assertEquals("mobi", Formats.extensionFor(Formats.MIME_MOBI))
+        assertEquals("fb2", Formats.extensionFor(Formats.MIME_FB2))
+        assertEquals("cbz", Formats.extensionFor(Formats.MIME_CBZ))
+        assertEquals("djvu", Formats.extensionFor(Formats.MIME_DJVU))
+        assertEquals("docx", Formats.extensionFor(Formats.MIME_DOCX))
+        assertEquals("rtf", Formats.extensionFor(Formats.MIME_RTF))
+        assertEquals("md", Formats.extensionFor(Formats.MIME_MARKDOWN))
+    }
+
+    @Test
     fun `looksLikeEpub hanya untuk zip`() {
         assertTrue(Formats.looksLikeEpub(byteArrayOf(0x50, 0x4B, 0x05, 0x06, 0, 0, 0, 0)))
         assertFalse(Formats.looksLikeEpub("%PDF-1.4".toByteArray()))

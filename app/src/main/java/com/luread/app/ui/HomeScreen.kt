@@ -45,6 +45,7 @@ fun HomeScreen(
     val recent by vm.recent.collectAsStateWithLifecycle()
     val stats by vm.stats.collectAsStateWithLifecycle()
     val featured by vm.featured.collectAsStateWithLifecycle()
+    val indonesian by vm.indonesian.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -110,6 +111,41 @@ fun HomeScreen(
                                 onClick = { onOpenBook(card.id) },
                                 modifier = Modifier.width(132.dp),
                             )
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            SectionHeader(
+                title = stringResource(R.string.home_indonesian),
+                actionLabel = stringResource(R.string.action_see_all),
+                onAction = onOpenDiscover,
+            )
+            when (val state = indonesian) {
+                is CatalogUiState.Loading -> SkeletonRows(count = 2)
+                is CatalogUiState.Error -> StateMessage(
+                    title = stringResource(R.string.state_error_title),
+                    subtitle = state.message,
+                    onRetry = vm::refresh,
+                )
+                is CatalogUiState.Content -> {
+                    val cards = state.page.results.map { it.toCard() }.take(12)
+                    if (cards.isEmpty()) {
+                        StateMessage(title = stringResource(R.string.state_empty_title))
+                    } else {
+                        LazyRow(
+                            contentPadding = PaddingValues(top = Sm),
+                            horizontalArrangement = Arrangement.spacedBy(Sm),
+                        ) {
+                            items(cards, key = { "indo-${it.id}" }) { card ->
+                                BookGridItem(
+                                    card = card,
+                                    onClick = { onOpenBook(card.id) },
+                                    modifier = Modifier.width(132.dp),
+                                )
+                            }
                         }
                     }
                 }
