@@ -145,6 +145,13 @@
     <string name="library_filter_downloaded">Offline</string>
     <string name="library_filter_finished">Finished</string>
     <string name="library_filter_favorite">Favorites</string>
+    <string name="library_search_hint">Search library…</string>
+    <string name="library_sort_added_desc">Newest</string>
+    <string name="library_sort_added_asc">Oldest</string>
+    <string name="library_sort_title_asc">Title A→Z</string>
+    <string name="library_sort_title_desc">Title Z→A</string>
+    <string name="library_sort_author_asc">Author A→Z</string>
+    <string name="library_sort_progress_desc">Progress</string>
     <string name="untitled">Untitled</string>
 
     <!-- Impor file -->

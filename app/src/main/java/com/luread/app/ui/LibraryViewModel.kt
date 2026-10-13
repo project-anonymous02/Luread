@@ -32,19 +32,47 @@ class LibraryViewModel(
         FAVORITE(R.string.library_filter_favorite),
     }
 
+    enum class Sort(@StringRes val labelRes: Int) {
+        ADDED_DESC(R.string.library_sort_added_desc),
+        ADDED_ASC(R.string.library_sort_added_asc),
+        TITLE_ASC(R.string.library_sort_title_asc),
+        TITLE_DESC(R.string.library_sort_title_desc),
+        AUTHOR_ASC(R.string.library_sort_author_asc),
+        PROGRESS_DESC(R.string.library_sort_progress_desc),
+    }
+
     private val filter = MutableStateFlow(Filter.ALL)
     val filterState: StateFlow<Filter> = filter
+
+    private val sort = MutableStateFlow(Sort.ADDED_DESC)
+    val sortState: StateFlow<Sort> = sort
+
+    private val searchQuery = MutableStateFlow("")
+    val searchState: StateFlow<String> = searchQuery
 
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message
 
     val books: StateFlow<List<BookEntity>> =
-        combine(library.observeLibrary(), filter) { list, selected ->
-            when (selected) {
+        combine(library.observeLibrary(), filter, sort, searchQuery) { list, selected, sortBy, query ->
+            val filtered = when (selected) {
                 Filter.ALL -> list
                 Filter.DOWNLOADED -> list.filter { it.localPath != null }
                 Filter.FINISHED -> list.filter { it.finished }
                 Filter.FAVORITE -> list.filter { it.favorite }
+            }
+            val searched = if (query.isBlank()) filtered else filtered.filter { book ->
+                book.title.contains(query, ignoreCase = true) ||
+                    book.authorsText.contains(query, ignoreCase = true) ||
+                    book.subjectsText.contains(query, ignoreCase = true)
+            }
+            when (sortBy) {
+                Sort.ADDED_DESC -> searched.sortedByDescending { it.addedAt }
+                Sort.ADDED_ASC -> searched.sortedBy { it.addedAt }
+                Sort.TITLE_ASC -> searched.sortedBy { it.title.lowercase() }
+                Sort.TITLE_DESC -> searched.sortedByDescending { it.title.lowercase() }
+                Sort.AUTHOR_ASC -> searched.sortedBy { it.authorsText.lowercase() }
+                Sort.PROGRESS_DESC -> searched.sortedByDescending { it.progress }
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -57,6 +85,14 @@ class LibraryViewModel(
 
     fun setFilter(value: Filter) {
         filter.value = value
+    }
+
+    fun setSort(value: Sort) {
+        sort.value = value
+    }
+
+    fun onSearchChange(text: String) {
+        searchQuery.value = text
     }
 
     fun dismissMessage() {

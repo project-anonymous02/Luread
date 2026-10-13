@@ -18,11 +18,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.FileOpen
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -48,6 +50,8 @@ fun LibraryScreen(onOpenBook: (String) -> Unit) {
     val vm = appViewModel { LibraryViewModel(it.library, it.appContext) }
     val books by vm.books.collectAsStateWithLifecycle()
     val filter by vm.filterState.collectAsStateWithLifecycle()
+    val sort by vm.sortState.collectAsStateWithLifecycle()
+    val search by vm.searchState.collectAsStateWithLifecycle()
     val message by vm.message.collectAsStateWithLifecycle()
 
     val importLauncher = rememberLauncherForActivityResult(
@@ -107,6 +111,17 @@ fun LibraryScreen(onOpenBook: (String) -> Unit) {
             }
         }
 
+        OutlinedTextField(
+            value = search,
+            onValueChange = vm::onSearchChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Lg, vertical = Xs),
+            placeholder = { Text(stringResource(R.string.library_search_hint)) },
+            singleLine = true,
+            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+        )
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -118,6 +133,27 @@ fun LibraryScreen(onOpenBook: (String) -> Unit) {
                 FilterChip(
                     selected = filter == option,
                     onClick = { vm.setFilter(option) },
+                    label = {
+                        Text(
+                            text = stringResource(option.labelRes),
+                            style = MaterialTheme.typography.labelMedium,
+                        )
+                    },
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = Lg),
+            horizontalArrangement = Arrangement.spacedBy(Xs),
+        ) {
+            LibraryViewModel.Sort.entries.forEach { option ->
+                FilterChip(
+                    selected = sort == option,
+                    onClick = { vm.setSort(option) },
                     label = {
                         Text(
                             text = stringResource(option.labelRes),
