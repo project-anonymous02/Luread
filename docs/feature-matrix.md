@@ -1,149 +1,108 @@
 # Feature Matrix — Luread
 
 Tanggal: 13 Oktober 2026. Status mengikuti definisi di `docs/research.md`.
-Paling penting: **"Implemented" ≠ "Tested"**. *Tested* = unit test lulus di CI (72/72, run `38356731098`) + pemeriksaan statis + **kompilasi sukses di CI**. Tidak ada fitur yang diuji pada perangkat; jalur runtime (Readium/PDF/WebView/unduhan) tetap *Implemented, Not Tested on device* meski kompilasi terverifikasi.
+Paling penting: **"Implemented" ≠ "Tested"**. *Tested* = unit test lulus di CI + pemeriksaan statis + **kompilasi sukses di CI**. Tidak ada fitur yang diuji pada perangkat; jalur runtime (Readium/PDF/WebView/unduhan/MangaDex) tetap *Implemented, Not Tested on device* meski kompilasi terverifikasi.
 
 Legenda: `V` Verified (sumber/audit), `I` Implemented (kode ada), `IT` Implemented-Not-Tested, `P` Planned (belum dibuat), `—` tidak berlaku.
+
+## 0. Sumber data (setelah hapus Wiki)
+
+| Sumber | Status | Catatan |
+| --- | --- | --- |
+| Project Gutenberg (Gutendex) | V/I | Audit penuh |
+| Open Library | V/I | Audit curl |
+| Internet Archive | V/I | Audit curl; termasuk komik `subject:comic books` |
+| Wikisource / Wikibooks | **DIHAPUS** | Arahan user: jangan pakai API Wiki sama sekali |
+| MangaDex (manga) | V/I | Tanpa key; attribution wajib; rate-limit 400ms |
 
 ## 1. Katalog & jaringan
 
 | Fitur prompt | Status | Bukti / catatan jujur |
 | --- | --- | --- |
 | Gutendex sebagai sumber | V | Audit penuh, `docs/gutendex-api-audit.md` |
-| Open Library sebagai sumber | V | Uji curl penuh, `docs/book-apis-audit.md` §1; unduhan lewat `editions→ocaid→archive.org/metadata` |
-| Internet Archive sebagai sumber | V | Uji curl penuh, §2 (`advancedsearch.php` + `metadata/{id}`); filter bahasa ISO 639-2 teruji |
-| Wikisource Indonesia sebagai sumber | V | Uji curl penuh, §3 (`list=search`/`allpages`/`action=parse`; `prop=extracts` terbukti rusak di wiki ini) |
-| Filter sumber (chip "Source") | I | `DiscoverScreen` + `DiscoverViewModel.setSource`; baris filter yang tidak didukung sumber aktif disembunyikan (bahasa di Wikisource; topik/format di luar Gutenberg) |
-| Search (judul/penulis lewat `search`) | I | `DiscoverViewModel` debounce 400 ms |
-| Pagination | I | `CatalogRepository.nextPage(cursor, query, source)` — kursor per sumber: URL tepercaya (Gutenberg), `page=N` (OL/IA), `search:offset`/`browse:judul` (Wikisource) |
-| Infinite scroll terkendali | I | `DiscoverScreen`: load berikutnya saat item terakhir ≤ total−4 |
-| Language filter | I | Gutenberg: 10 bahasa terverifikasi; Open Library & Internet Archive: kode ISO 639-2 (uji curl); Wikisource: disembunyikan (wiki khusus `id`) |
-| Subject/topic filter | I | `children`, `poetry` — **hanya Gutenberg** (parameter OL/IA tidak didukung → baris disembunyikan) |
-| Format filter | I | EPUB (`application/epub+zip`), HTML (`text/html`) **hanya Gutenberg**; `text/plain` **tidak** ditawarkan (503) |
-| Sorting | — | Tidak ada di UI. Parameter `sort` terbukti 503 → kontrol sorting **tidak dibuat** agar tidak menampilkan pilihan palsu |
-| Bookshelf filter | P | Field ada di API, parameter tidak diuji → tidak ditampilkan |
-| Search result count | I | `count` dari API ditampilkan |
-| Retry / error state | I | Network/Timeout 2×, 503 1×, non-JSON tidak diulang |
-| Recent searches | P | |
-| Search suggestions | P | |
-| Related books | P | Butuh pemrosesan lokal metadata (bisa ditambah, belum ada) |
-| Copy book link / share book | P | Tidak ada di `BookDetailScreen` |
+| Open Library sebagai sumber | V | Uji curl penuh, `docs/book-apis-audit.md` §1 |
+| Internet Archive sebagai sumber | V | Uji curl penuh, §2; filter bahasa ISO 639-2; **topic (`subject:…`) didukung** |
+| Filter sumber (chip "Source") | I | `DiscoverScreen`; 3 sumber (Wiki dihapus) |
+| Search | I | Debounce 400 ms |
+| Pagination | I | Kursor per sumber |
+| Infinite scroll terkendali | I | Item terakhir ≤ total−4 |
+| Language filter | I | 48 bahasa di UI; 65 pasangan ISO 639-2 di `CatalogLanguages` |
+| Subject/topic filter | I | 39 topik (termasuk comic books/comics/graphic novels); Gutenberg via `topic`, OL/IA via `subject:` di query |
+| Format filter | I | 10 format; baris hanya untuk Gutenberg kecuali sumber mendukung |
+| Retry / error state | I | Network/Timeout 3×, 503/429 2× |
+| In-memory cache 5 menit per kunci query | I | `CatalogRepository.pageCache` |
 
-## 2. Detail buku
+## 2. Manga (MangaDex)
 
 | Fitur | Status | Catatan |
 | --- | --- | --- |
-| Cover, judul, penulis, bahasa, subjek, ringkasan, jumlah unduhan, hak cipta, daftar format | I | Semua dari metadata API; field kosong disembunyikan (bukan diisi teks palsu) |
-| Read now / Download / Cancel download | I | Tombol sesuai status nyata |
-| Add to library / Remove / Favorite | I | |
-| Delete file lokal | I | Dengan konfirmasi |
-| Translate summary | I | Lewat `ACTION_PROCESS_TEXT` |
-| Translator (kontributor) | P | Field `translators` ada di DTO, belum ditampilkan |
-| Add to collection / Share / Copy metadata / Open source page | P | |
-| File size | — | Gutendex **tidak** menyediakan ukuran → tidak ditampilkan. Ukuran diisi hanya setelah unduhan berjalan (`totalBytes`) |
-| Offline availability | I | Ditandai dari `localPath != null` |
+| Browse manga populer | I | `order[followedCount]` |
+| Search manga | I | Debounce 400 ms di `MangaListViewModel` |
+| Infinite scroll | I | SnapshotFlow grid |
+| Detail (cover, author, tag, status, deskripsi, chapter) | I | `GET /manga/{id}` + `GET /manga/{id}/feed` (id/en) |
+| Baca chapter (pager gambar) | I | `GET /at-home/server/{id}`, data-saver fallback original |
+| Attribution MangaDex + scanlation | I | String `manga_credit` di detail |
+| Baris Manga di Home | I | Bisa dimatikan di Settings |
 
-## 3. Perpustakaan
-
-| Fitur | Status |
-| --- | --- |
-| Daftar semua buku + filter All/Offline/Finished/Favorites | I |
-| Favorite toggle per baris | I |
-| Import file via SAF (`OpenDocument`), multi-format EPUB/PDF/TXT/HTML | I (satu per satu; multi-pick belum) |
-| Validasi magic byte saat impor + deteksi format tak didukung | I |
-| Duplikat saat impor | I (id berbasis hash path → upsert) |
-| Progress per buku & terakhir dibuka | I |
-| Remove dari perpustakaan | I |
-| Grid/list toggle, sort, pencarian lokal, multi-select, batch action | P |
-| Custom collections (buat, rename, pin, reorder, cover) | P |
-| Archived books | P |
-| Metadata editing buku lokal | P |
-| Restore setelah dibuka kembali | I (data di Room, bukan memori) |
-
-## 4. Reader
+## 3. Komik (Internet Archive)
 
 | Fitur | Status | Catatan |
 | --- | --- | --- |
-| EPUB 2/3 via Readium 3.4.0 | IT | Kode lengkap (`ReaderViewModel`, `EpubContent`); **kompilasi terverifikasi di CI**, runtime belum diuji di perangkat |
-| PDF via `PdfRenderer` | IT | Render per halaman; **tanpa seleksi teks** (memang tidak ditampilkan aksi seleksi untuk PDF) |
-| TXT (paginasi internal, cap 4 MB) | IT | Unit test untuk paginasinya *Tested* di CI |
-| HTML lokal (WebView, JS mati) | IT | |
-| Resume posisi baca | IT | `SavedLocation` JSON → `ReflowableWebGoLocation` |
-| Auto-save progres (debounce 1,2 s + saat keluar) | IT | |
-| Bookmark | IT | |
-| Anotasi sheet (daftar, lompat, hapus) | IT | Lompat lokasi hanya EPUB |
-| Highlight + catatan (model tersedia) | IT | Model & DAO ada; aksi buat highlight dari seleksi Readium belum dipasang di UI → **sebagian** |
-| Progress bar & posisi | IT | |
-| Keep screen on | IT | Lewat flag window + pengaturan |
-| Kontrol auto-hide | I | Overlay disembunyikan; ketuk untuk menampilkan |
-| TOC, search within book, page navigation EPUB, per-book settings, custom fonts, tap zones, arah baca | P | Butuh ekstensi Readium preferences/TOC yang belum dipasang |
-| Error recovery file rusak | IT | Pesan error + state gagal (bukan crash); PDF invalid → pesan |
+| Home "Komik & Comic Books" | I | `subject:comic books` + format readable |
+| Filter topik komik di Discover | I | comic books / comics / graphic novels |
+| API Komik pihak ketiga (OmegaAPI, Komiku REST, dll.) | **TIDAK DIPAKAI** | Uji curl: `DEPLOYMENT_DISABLED` / 403 AI-detector / 404; tidak ada backend sendiri |
 
-## 5. Kustomisasi
+## 4. Perpustakaan & impor
 
 | Fitur | Status |
 | --- | --- |
-| Tema aplikasi Light/Dark/System | I (DataStore) |
-| Aksen warna (4 preset) | I |
-| Ukuran teks baca 14–30 sp | IT (diterapkan ke prefs Readium + pager teks) |
-| Layar tetap menyala | I |
-| Statistik aktif/nonaktif | I |
-| Font family, line height, letter spacing, margin, tema sepia, warna kustom, tap zone, orientasi, brightness, per-book override, pencarian settings | P | 
+| Daftar + filter All/Offline/Finished/Favorites | I |
+| Import file via SAF multi-format | I |
+| **Impor arsip ZIP** — ekstrak & impor EPUB/HTML/TXT/PDF/CBZ di dalamnya | I (`LibraryViewModel.importZipContents`) |
+| Validasi magic byte | I |
+| Remove / favorite / progress | I |
 
-Catatan: hanya pengaturan yang **benar-benar mengubah perilaku** yang ditampilkan (prompt: jangan membuat pengaturan yang hanya mengubah label).
+## 5. Reader
 
-## 6. Bahasa & penerjemahan
+| Fitur | Status | Catatan |
+| --- | --- | --- |
+| EPUB 2/3 via Readium 3.4.0 | IT | |
+| PDF via `PdfRenderer` | IT | Tanpa seleksi teks |
+| TXT (paginasi internal) | IT | Unit test CI |
+| HTML lokal (WebView) | IT | **Background putih mutlak** (`injectWhiteCss` + bg putih) |
+| CBZ (ekstrak gambar) | IT | |
+| Manga (gambar URL MangaDex) | I | `MangaReaderScreen` HorizontalPager |
+| Resume posisi, auto-save, bookmark, anotasi | IT | |
+| Inline translate EPUB (cap 4000 char) | IT | Anti-lag |
+| Line-height / dim overlay / page animation | I | Dari Settings |
+
+## 6. Kustomisasi (Settings super lengkap)
 
 | Fitur | Status |
 | --- | --- |
-| Deteksi/filter bahasa dari metadata | I |
-| ACTION_PROCESS_TEXT dari ringkasan buku & teks terpilih di EPUB | IT |
-| Halaman Translator (ketik/tempel, kirim, salin hasil) | IT |
-| Copy/Share sebagai fallback | I (copy); share penuh ke aplikasi terjemahan belum |
-| Hasil terjemahan ditampilkan dalam panel Luread | IT | Hanya bila handler mengembalikan `EXTRA_PROCESS_TEXT`; bila tidak ada → pesan jujur |
-| Pencarian kata di buku, vocabulary notebook, TTS, dictionary | P |
-| ML Kit Translation native | P | Sengaja tidak dipasang (lihat `translation-integration.md`) |
+| Tema Light/Dark/System | I |
+| Aksen preset (4) | I |
+| **Warna aksen kustom (swatch ARGB)** | I |
+| Radius kartu Soft/Rounded/Pill | I |
+| Jumlah kolom grid 2–5 | I (dipakai Discover + Manga) |
+| Rasio cover | I |
+| Metadata ringkas kartu | I |
+| Kurangi animasi | I |
+| Tampilkan baris Manga di Home | I |
+| Ukuran teks 14–30 sp | IT |
+| Line-height 1.0–2.2× | I (TextPager) |
+| Dim overlay 0–70% | I (ReaderScreen) |
+| Animasi halaman | I |
+| Keep screen on / statistik | I |
+| Bahasa target terjemahan (id/en/ms/ja) | I (tersimpan; dipakai translator) |
 
-## 7. Statistik & sesi
-
-| Fitur | Status |
-| --- | --- |
-| Waktu membaca hari ini & total | I (dihitung dari tabel `sessions`) |
-| Jumlah selesai | I |
-| Riwayat sesi (buku, durasi, progres sebelum→sesudah) | I |
-| Hapus riwayat | I |
-| Kalender membaca, target harian/mingguan, pengingat, ekspor statistik | P |
-
-Penting: waktu hanya dihitung ketika sesi benar-benar diamati aplikasi (masuk reader → keluar reader). Tidak ada timer latar yang mengarang angka.
-
-## 8. Pengaturan global
-
-| Kategori prompt | Yang tersedia |
-| --- | --- |
-| Appearance | tema, aksen |
-| Reading | ukuran teks, keep-screen-on, statistik |
-| Tools | buka penerjemah, hapus riwayat |
-| About | penjelasan sumber data + versi |
-| Motion, Library defaults, Network, Data backup/restore, Accessibility lanjutan, pencarian settings | **P** |
-
-## 9. Privasi & keamanan
-
-| Ketentuan | Status |
-| --- | --- |
-| Tanpa akun & API key | V/I |
-| Izin minimal (`INTERNET`, `WAKE_LOCK`) | I |
-| HTTPS saja, validasi host URL API | I (`isTrustedCatalogUrl`) |
-| Tidak ada SDK analitik/iklan | V (daftar dependensi) |
-| File pengguna di `filesDir` (privat) | I |
-| Tidak mencetak isi buku ke log | I (dicek manual; tidak ada `Log` di jalur baca) |
-
-## 10. Infrastruktur
+## 7. Privasi & infrastruktur
 
 | Item | Status |
 | --- | --- |
-| Gradle wrapper resmi 9.6.0 | V (file dari tag resmi; dicek `verify.py`) |
-| Workflow CI (push/PR/manual), unit test, assembleDebug, upload artifact | V (hijau di run `38356731098`) |
-| Unit test (parsing, format, paginasi TXT, codec lokasi, URL multi-sumber, pesan error, HTML strip) | V (72/72 lulus di CI) |
-| AndroidTest / instrumentasi | **Tidak dibuat** (keputusan eksplisit: tidak ada emulator; folder sengaja tidak dibuat kosong) |
-| Logo resmi | I | `image/logo.png` (isi JPEG 512×512) divalidasi magic byte oleh `:app:integrateLogo`, disalin ke `res/drawable-nodpi/logo.*`, dipakai sebagai `android:icon`. Build gagal bila file hilang/rusak |
-| R8/ProGuard release | Dinonaktifkan sengaja (belum terverifikasi) |
+| Tanpa akun & API key | V/I |
+| HTTPS saja, host tepercaya | I |
+| Tanpa SDK analitik/iklan | V |
+| CI workflow + unit test + assembleDebug | V |
+| Logo resmi via `integrateLogo` | I |
+
