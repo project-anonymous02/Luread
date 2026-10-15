@@ -163,6 +163,7 @@
     <string name="import_error_format">Format \'%1$s\' is not supported. Choose EPUB, PDF, HTML, TXT, MOBI, FB2, CBZ, RTF, or Markdown.</string>
     <string name="import_error_copy">The file could not be copied.</string>
     <string name="import_error_empty">The source file is empty.</string>
+    <string name="import_error_rar">RAR archives are not supported. Extract the comic to a CBZ/ZIP first.</string>
     <string name="import_added">Added \'%1$s\' to your library.</string>
     <string name="import_zip_added">Imported %1$d readable file(s) from \'%2$s\'.</string>
     <string name="import_zip_empty">No readable books (EPUB/HTML/TXT/PDF/CBZ) found inside the ZIP.</string>
@@ -183,7 +184,7 @@
     <string name="home_recommendations">Cerita rekomendasi</string>
     <string name="home_knowledge">Buku Pengetahuan</string>
     <string name="home_manga">Manga (MangaDex)</string>
-    <string name="home_comics">Komik &amp; Comic Books (Internet Archive)</string>
+    <string name="home_comics">Komik Indonesia (Internet Archive)</string>
     <string name="home_recent">Recently added</string>
     <string name="home_empty_subtitle">Add books from Discover, or import your own EPUB/PDF/TXT files.</string>
     <string name="home_stat_library">%1$d in your library</string>
@@ -207,6 +208,7 @@
     <string name="detail_source_note">Source: Project Gutenberg via Gutendex. Copyright status follows each book.</string>
     <string name="detail_book_unavailable">Book is not available.</string>
     <string name="detail_finished">selesai</string>
+    <string name="detail_download_failed">Download failed: %1$s</string>
 
     <!-- Reader -->
     <string name="reader_error_title">Cannot open this book</string>
@@ -272,10 +274,10 @@
     <string name="settings_volume_nav">Volume keys navigate pages</string>
     <string name="settings_tap_left_next">Tap left side for next page</string>
     <string name="settings_show_page_numbers">Show page numbers</string>
-    <string name="settings_reading_mode">Reading mode: %1$s</string>
+    <string name="settings_reading_direction">Reading direction: %1$s</string>
     <string name="settings_manga_direction">Manga direction: %1$s</string>
-    <string name="settings_auto_scroll_manga">Auto-scroll manga</string>
-    <string name="settings_auto_scroll_speed">Auto-scroll speed: %1$s</string>
+    <string name="settings_komik_direction">Komik direction: %1$s</string>
+    <string name="settings_page_animation_style">Page animation style: %1$s</string>
     <string name="settings_manga_quality">Manga image quality: %1$s</string>
     <string name="settings_default_sort">Default sort: %1$s</string>
     <string name="settings_show_finished">Show finished books</string>
@@ -315,6 +317,9 @@
     <string name="manga_chapters">Chapters (%1$d)</string>
     <string name="manga_reading">Reading manga</string>
     <string name="manga_credit">Manga data &amp; images from MangaDex. Please credit scanlation groups.</string>
+    <string name="manga_no_chapters">Tidak ada chapter di MangaDex untuk judul ini.</string>
+    <string name="manga_open_external">Buka di situs asal</string>
+    <string name="manga_pages">%1$d pp</string>
 
     <!-- Aksesibilitas -->
     <string name="cd_back">Navigate back</string>

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -129,22 +130,34 @@ class BookDetailViewModel(
 
     fun download() {
         val remote = catalogBook.value
-        val url = libraryBook.value?.sourceUrl
-            ?: remote?.let { item ->
-                Formats.bestReadable(item.formats)?.let { readable ->
-                    Formats.urlsByMime(item.formats)[readable.mime]
-                }
-            }
-            ?: remote?.canonicalUrl
+        // LUREAD-FIX: URL unduhan dihitung ulang dari format katalog terbaru
+        // (bukan sourceUrl lama yang bisa berupa halaman details/works).
+        val url = remote?.let { item ->
+            Formats.bestReadable(item.formats)?.let { Formats.urlsByMime(item.formats)[it.mime] }
+        }
+            ?: libraryBook.value?.sourceUrl?.takeIf { !isDetailsPage(it) }
             ?: return
 
-        val mime = libraryBook.value?.contentType
-            ?: remote?.let { Formats.bestReadable(it.formats)?.mime }
-        downloads.enqueue(bookId, url, mime)
-        if (libraryBook.value == null && remote != null) {
-            viewModelScope.launch { library.addFromCatalog(remote) }
+        val mime = remote?.let { Formats.bestReadable(it.formats)?.mime }
+            ?: libraryBook.value?.contentType
+
+        viewModelScope.launch {
+            // LUREAD-FIX: baris perpustakaan dibuat DAN di-await lebih dulu —
+            // sebelumnya download bisa selesai lebih dulu sehingga setLocalFile
+            // menjadi UPDATE kosong (row belum ada) dan file tak pernah
+            // terpasang; upsert setelah download juga menimpa localPath.
+            if (libraryBook.value == null && remote != null) {
+                library.addFromCatalog(remote)
+            }
+            downloads.enqueue(bookId, url, mime)
         }
     }
+
+    /** Halaman detail (bukan berkas) tidak boleh diunduh sebagai buku. */
+    private fun isDetailsPage(url: String): Boolean =
+        url.contains("archive.org/details/") ||
+            url.startsWith("https://openlibrary.org/works/") ||
+            url.matches(Regex("https://www\\.gutenberg\\.org/ebooks/\\d+$"))
 
     fun cancelDownload() = downloads.cancel(bookId)
 
@@ -204,4 +217,10 @@ class BookDetailViewModel(
     }
 
     val error: StateFlow<String?> = catalogError
+
+    // LUREAD-FIX: alasan kegagalan unduhan dari DownloadManager, agar
+    // pengguna melihat "HTTP 503" dsb. alih-alih tombol diam-diam gagal.
+    val downloadError: StateFlow<String?> = downloads.errors
+        .map { it[bookId] }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 }

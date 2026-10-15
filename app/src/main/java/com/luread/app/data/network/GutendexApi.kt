@@ -87,6 +87,8 @@ class GutendexApi(
             client.get(url) {
                 header(HttpHeaders.UserAgent, USER_AGENT)
                 accept(ContentType.Application.Json)
+                // LUREAD-FEAT: timeout dari Pengaturan diterapkan per-request.
+                NetworkTimeout.applyTo(this)
             }
         } catch (t: Throwable) {
             if (t is CancellationException) throw t

@@ -28,6 +28,9 @@ object Formats {
     const val MIME_JPEG = "image/jpeg"
     const val MIME_RDF = "application/rdf+xml"
     const val MIME_OCTET_STREAM = "application/octet-stream"
+    // LUREAD-FEAT: RAR terdeteksi supaya unduhan/impor bisa menolak dengan
+    // pesan jelas — Luread tidak punya engine RAR (hanya ZipFile).
+    const val MIME_RAR = "application/vnd.rar"
 
     /**
      * Format yang bisa dibaca Luread (punya reader engine), terurut dari yang paling disukai.
@@ -137,6 +140,10 @@ object Formats {
     /**
      * Deteksi format file berdasarkan isi (magic number) — dipakai untuk import
      * dan validasi unduhan, bukan sekadar nama berkas.
+     *
+     * LUREAD-FIX: MOBI butuh minimal 68 byte (tag "BOOKMOBI" di offset 60),
+     * jadi pemanggil wajib membaca setidaknya 72 byte; penambahan deteksi
+     * RAR dan HTML agar file dengan ekstensi salah tetap teridentifikasi.
      */
     fun sniff(head: ByteArray): String? {
         if (head.size >= 4) {
@@ -146,6 +153,14 @@ object Formats {
             val isPdf = head[0] == '%'.code.toByte() && head[1] == 'P'.code.toByte() &&
                 head[2] == 'D'.code.toByte() && head[3] == 'F'.code.toByte()
             if (isPdf) return MIME_PDF
+            // RAR: "Rar!" diikuti 1A 07 (RAR4) atau 1A 07 01 00 (RAR5).
+            if (head.size >= 6 &&
+                head[0] == 'R'.code.toByte() && head[1] == 'a'.code.toByte() &&
+                head[2] == 'r'.code.toByte() && head[3] == '!'.code.toByte() &&
+                head[4] == 0x1A.toByte()
+            ) {
+                return MIME_RAR
+            }
         }
         if (head.size >= 8) {
             // MOBI: bytes 60..67 biasanya "BOOKMOBI" atau "TEXtREAd"
@@ -157,6 +172,9 @@ object Formats {
             if (head[0] == '<'.code.toByte()) {
                 val headStr = String(head, Charsets.US_ASCII)
                 if (headStr.contains("FictionBook")) return MIME_FB2
+                // HTML: doctype/html awal (kasus ekstensi .txt/.bin yang isinya web).
+                val lower = headStr.lowercase()
+                if (lower.contains("<!doctype html") || lower.contains("<html")) return MIME_HTML
             }
             // DjVu: "AT&TFORM"
             if (String(head, 0, 8, Charsets.US_ASCII) == "AT&TFORM") return MIME_DJVU
@@ -175,4 +193,62 @@ object Formats {
 
     /** True bila magic number konsisten dengan EPUB (zip dengan container.xml). */
     fun looksLikeEpub(head: ByteArray): Boolean = sniff(head) == EPUB_OR_ZIP
+
+    // ------------------------------------------------------------------
+    // LUREAD-FEAT: logika keputusan impor (fungsi murni, diuji unit test;
+    // LibraryViewModel hanya membungkusnya dengan pesan galat lokal).
+    // ------------------------------------------------------------------
+
+    /**
+     * MIME yang boleh masuk perpustakaan lewat impor (punya reader atau
+     * minimal tersimpan untuk dibuka kemudian).
+     */
+    val IMPORTABLE_MIMES: Set<String> = setOf(
+        MIME_EPUB, MIME_HTML, MIME_TEXT, MIME_PDF, MIME_CBZ,
+        MIME_MOBI, MIME_FB2, MIME_DJVU, MIME_RTF, MIME_DOCX, MIME_MARKDOWN,
+    )
+
+    /**
+     * True bila file harus diekstrak sebagai arsip ZIP polos, bukan diimpor
+     * langsung: ekstensi `zip`, ATAU magic-nya zip tetapi ekstensinya bukan
+     * `epub`/`cbz`/`cbr`/`docx` (empat format berbasis zip yang punya
+     * identitas sendiri — mis. `buku.zip.txt` yang isinya arsip).
+     */
+    fun isPlainZipArchive(nameExt: String, magic: ByteArray): Boolean =
+        nameExt.lowercase() == "zip" ||
+            (sniff(magic) == EPUB_OR_ZIP &&
+                nameExt.lowercase() !in setOf("epub", "cbz", "cbr", "docx"))
+
+    /**
+     * Tentukan MIME impor dari ekstensi + isi file. Urutan keputusan
+     * (dipakai [com.luread.app.ui.LibraryViewModel] untuk impor langsung
+     * dan ekstrak ZIP):
+     *  * ekstensi `cbz`/`cbr` menang untuk arsip komik (keduanya berbasis zip);
+     *  * magic number menang atas ekstensi (file `.txt` berisi HTML → HTML);
+     *  * tanpa magic yang dikenal, ekstensi menjadi harapan terakhir;
+     *  * null = format tidak didukung.
+     */
+    fun resolveImportMime(nameExt: String, magic: ByteArray): String? {
+        val ext = nameExt.lowercase()
+        // Format berbasis zip dengan identitas sendiri: ekstensi menang.
+        if (ext == "cbz" || ext == "cbr") return MIME_CBZ
+        if (ext == "docx") return MIME_DOCX
+        val sniffed = sniff(magic) ?: when (ext) {
+            "epub" -> MIME_EPUB
+            "pdf" -> MIME_PDF
+            "txt", "text" -> MIME_TEXT
+            "html", "htm" -> MIME_HTML
+            "mobi", "prc", "azw", "azw3" -> MIME_MOBI
+            "fb2" -> MIME_FB2
+            "djvu" -> MIME_DJVU
+            "docx" -> MIME_DOCX
+            "rtf" -> MIME_RTF
+            "md", "markdown" -> MIME_MARKDOWN
+            else -> return null
+        }
+        return when (sniffed) {
+            EPUB_OR_ZIP -> MIME_EPUB
+            else -> sniffed
+        }
+    }
 }

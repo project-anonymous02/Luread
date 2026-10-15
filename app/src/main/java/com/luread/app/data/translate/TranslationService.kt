@@ -88,6 +88,8 @@ class TranslationService(
                 parameter("tl", targetLang)
                 parameter("dt", "t")
                 parameter("q", text)
+                // LUREAD-FEAT: timeout dari Pengaturan diterapkan per-request.
+                com.luread.app.data.network.NetworkTimeout.applyTo(this)
             }.bodyAsText()
         } catch (t: Throwable) {
             if (t is CancellationException) throw t
@@ -137,6 +139,7 @@ class TranslationService(
             client.get(MYMEMORY_URL) {
                 parameter("q", text.take(500))
                 parameter("langpair", "$src|$targetLang")
+                com.luread.app.data.network.NetworkTimeout.applyTo(this)
             }.bodyAsText()
         } catch (t: Throwable) {
             if (t is CancellationException) throw t

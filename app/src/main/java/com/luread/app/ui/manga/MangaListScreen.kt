@@ -224,6 +224,15 @@ fun MangaGridItem(item: MangaRepository.MangaSummary, onClick: () -> Unit, modif
                 overflow = TextOverflow.Ellipsis,
             )
         }
+        // LUREAD-FEAT: label sumber (Komiku) agar hasil dua sumber jelas beda.
+        if (item.source != null) {
+            Text(
+                text = item.source,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
     }
 }
 

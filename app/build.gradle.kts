@@ -94,6 +94,9 @@ dependencies {
 
     implementation(libs.coil.compose)
 
+    // LUREAD-FEAT: parser HTML untuk sumber manga Komiku (scraping).
+    implementation(libs.jsoup)
+
     implementation(libs.readium.shared)
     implementation(libs.readium.streamer)
     implementation(libs.readium.navigator)

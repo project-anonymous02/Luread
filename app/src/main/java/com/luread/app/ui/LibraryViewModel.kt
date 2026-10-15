@@ -154,10 +154,14 @@ class LibraryViewModel(
                 val magic = readMagic(resolver, uri)
                     ?: throw IllegalArgumentException(appContext.getString(R.string.import_error_open))
 
+                // LUREAD-FEAT: tolak RAR dengan pesan jelas (tidak ada engine RAR),
+                // bukan mengimpornya sebagai CBZ yang pasti gagal dibuka.
+                if (Formats.sniff(magic) == Formats.MIME_RAR) {
+                    throw IllegalArgumentException(appContext.getString(R.string.import_error_rar))
+                }
+
                 // ZIP polos (bukan EPUB/CBZ): ekstrak dan impor isi yang readable.
-                if (nameExt == "zip" || (Formats.sniff(magic) == Formats.EPUB_OR_ZIP &&
-                        nameExt !in setOf("epub", "cbz", "cbr"))
-                ) {
+                if (Formats.isPlainZipArchive(nameExt, magic)) {
                     return@runCatching importZipContents(uri, nameBase)
                 }
 
@@ -170,43 +174,22 @@ class LibraryViewModel(
         }
     }
 
-    /** Baca magic number (8 byte pertama) dari URI. */
+    /** Baca magic number (128 byte pertama) dari URI — cukup untuk sniff MOBI (offset 60). */
     private fun readMagic(resolver: android.content.ContentResolver, uri: Uri): ByteArray? =
         resolver.openInputStream(uri)?.use { input ->
-            val head = ByteArray(8)
-            var read = 0
-            while (read < head.size) {
-                val n = input.read(head, read, head.size - read)
-                if (n < 0) break
-                read += n
-            }
-            head.copyOf(read)
+            readHead(input, 128)
         }
 
-    /** Tentukan MIME dari ekstensi + sniff. */
-    private fun resolveMime(nameExt: String, magic: ByteArray): String {
-        // Untuk CBZ/CBR, ekstensi menang atas sniff (keduanya ZIP).
-        if (nameExt == "cbz" || nameExt == "cbr") return Formats.MIME_CBZ
-        val sniffed = Formats.sniff(magic) ?: when (nameExt) {
-            "epub" -> Formats.MIME_EPUB
-            "pdf" -> Formats.MIME_PDF
-            "txt", "text" -> Formats.MIME_TEXT
-            "html", "htm" -> Formats.MIME_HTML
-            "mobi", "prc", "azw", "azw3" -> Formats.MIME_MOBI
-            "fb2" -> Formats.MIME_FB2
-            "djvu" -> Formats.MIME_DJVU
-            "docx" -> Formats.MIME_DOCX
-            "rtf" -> Formats.MIME_RTF
-            "md", "markdown" -> Formats.MIME_MARKDOWN
-            else -> throw IllegalArgumentException(
+    /**
+     * Tentukan MIME dari ekstensi + sniff. Logika murni ada di
+     * [Formats.resolveImportMime]; method ini hanya membungkus hasilnya
+     * dengan pesan galat tersimpan lokal.
+     */
+    private fun resolveMime(nameExt: String, magic: ByteArray): String =
+        Formats.resolveImportMime(nameExt, magic)
+            ?: throw IllegalArgumentException(
                 appContext.getString(R.string.import_error_format, nameExt),
             )
-        }
-        return when (sniffed) {
-            Formats.EPUB_OR_ZIP -> Formats.MIME_EPUB
-            else -> sniffed
-        }
-    }
 
     /** Salin satu stream URI ke file internal, daftarkan ke library, kembalikan judul. */
     private suspend fun importFromStream(uri: Uri, mime: String, nameBase: String): String {
@@ -256,23 +239,14 @@ class LibraryViewModel(
                             val entryBase = entryName.substringBeforeLast('.', entryName)
                             val tempFile = File(tempDir, "entry-$imported-$skipped")
                             tempFile.outputStream().use { out -> zip.copyTo(out) }
-                            val entryMagic = tempFile.inputStream().use { s ->
-                                val head = ByteArray(8)
-                                var read = 0
-                                while (read < head.size) {
-                                    val n = s.read(head, read, head.size - read)
-                                    if (n < 0) break
-                                    read += n
-                                }
-                                head.copyOf(read)
-                            }
+                            val entryMagic = tempFile.inputStream().use { s -> readHead(s, 128) }
                             val mime = runCatching { resolveMime(entryExt, entryMagic) }.getOrNull()
                             // Hanya impor format yang punya reader engine.
-                            val readable = mime != null && mime in READABLE_IMPORT_MIMES
-                            if (readable) {
+                            val readable = mime != null && mime in Formats.IMPORTABLE_MIMES
+                            if (readable && mime != null) {
                                 val key = uniqueKey()
                                 val dir = File(appContext.filesDir, "books").apply { mkdirs() }
-                                val target = File(dir, "${key.replace(':', '_')}.${Formats.extensionFor(mime!!)}")
+                                val target = File(dir, "${key.replace(':', '_')}.${Formats.extensionFor(mime)}")
                                 tempFile.copyTo(target, overwrite = true)
                                 if (target.length() > 0L) {
                                     library.addImported(
@@ -312,19 +286,16 @@ class LibraryViewModel(
     }
 
     companion object {
-        /** MIME yang bisa diimpor (punya reader atau minimal tersimpan). */
-        private val READABLE_IMPORT_MIMES = setOf(
-            Formats.MIME_EPUB,
-            Formats.MIME_HTML,
-            Formats.MIME_TEXT,
-            Formats.MIME_PDF,
-            Formats.MIME_CBZ,
-            Formats.MIME_MOBI,
-            Formats.MIME_FB2,
-            Formats.MIME_DJVU,
-            Formats.MIME_RTF,
-            Formats.MIME_DOCX,
-            Formats.MIME_MARKDOWN,
-        )
+        /** Baca hingga [size] byte pertama dari stream (untuk sniff format). */
+        private fun readHead(input: java.io.InputStream, size: Int): ByteArray {
+            val head = ByteArray(size)
+            var read = 0
+            while (read < size) {
+                val n = input.read(head, read, size - read)
+                if (n < 0) break
+                read += n
+            }
+            return head.copyOf(read)
+        }
     }
 }

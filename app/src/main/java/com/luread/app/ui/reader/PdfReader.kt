@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
@@ -25,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.luread.app.R
 import com.luread.app.core.design.StateMessage
+import kotlinx.coroutines.launch
 import java.io.File
 
 /**
@@ -41,6 +43,10 @@ fun PdfReader(
     startPage: Int,
     onPage: (pageIndex: Int, pageCount: Int) -> Unit,
     modifier: Modifier = Modifier,
+    rtl: Boolean = false,
+    animatePages: Boolean = true,
+    showPageNumbers: Boolean = true,
+    nav: ReaderNav? = null,
 ) {
     val file = remember(path) { File(path) }
     val renderer = remember(file) { openRenderer(file) }
@@ -75,6 +81,21 @@ fun PdfReader(
         onPage(pagerState.currentPage, pageCount)
     }
 
+    // LUREAD-FEAT: tap zone / volume key maju-mundur per halaman PDF.
+    val navScope = rememberCoroutineScope()
+    DisposableEffect(nav, pagerState) {
+        nav?.register { delta ->
+            val target = (pagerState.currentPage + delta).coerceIn(0, pageCount - 1)
+            if (target != pagerState.currentPage) {
+                navScope.launch {
+                    if (animatePages) pagerState.animateScrollToPage(target)
+                    else pagerState.scrollToPage(target)
+                }
+            }
+        }
+        onDispose { nav?.register(null) }
+    }
+
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
@@ -84,6 +105,9 @@ fun PdfReader(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
             pageSpacing = 8.dp,
+            // LUREAD-FIX: geser horizontal saja; rtl membalik arah halaman.
+            reverseLayout = rtl,
+            userScrollEnabled = true,
         ) { pageIndex ->
             val bitmap = remember(pageIndex, maxWidth, maxHeight, renderer) {
                 renderPage(renderer, pageIndex, constraints.maxWidth, constraints.maxHeight)
@@ -100,19 +124,21 @@ fun PdfReader(
             }
         }
 
-        androidx.compose.material3.Text(
-            text = stringResource(R.string.pdf_page_count, pagerState.currentPage + 1, pageCount),
-            style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
-            color = ComposeColor.White,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(12.dp)
-                .background(
-                    ComposeColor(0x66000000),
-                    androidx.compose.material3.MaterialTheme.shapes.small,
-                )
-                .padding(horizontal = 10.dp, vertical = 4.dp),
-        )
+        if (showPageNumbers) {
+            androidx.compose.material3.Text(
+                text = stringResource(R.string.pdf_page_count, pagerState.currentPage + 1, pageCount),
+                style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
+                color = ComposeColor.White,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(12.dp)
+                    .background(
+                        ComposeColor(0x66000000),
+                        androidx.compose.material3.MaterialTheme.shapes.small,
+                    )
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+            )
+        }
     }
 }
 

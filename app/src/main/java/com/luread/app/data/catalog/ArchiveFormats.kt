@@ -64,10 +64,8 @@ object ArchiveFormats {
             f.name.endsWith(".cbz", ignoreCase = true) ||
             f.format.equals("Comic Book ZIP", ignoreCase = true)
         }
-        val cbr = files.firstOrNull { f ->
-            f.name.endsWith(".cbr", ignoreCase = true) ||
-            f.format.equals("Comic Book RAR", ignoreCase = true)
-        }
+        // LUREAD-FIX: file CBR (RAR) tidak ditawarkan — Luread tidak punya
+        // engine RAR; mengunduhnya hanya menghasilkan file yang tak terbuka.
         val rtf = files.firstOrNull { f ->
             f.name.endsWith(".rtf", ignoreCase = true) ||
             f.format.equals("Rich Text Format", ignoreCase = true)
@@ -100,7 +98,6 @@ object ArchiveFormats {
         fb2?.let { picked[Formats.MIME_FB2] = downloadUrl(identifier, it.name) }
         djvu?.let { picked[Formats.MIME_DJVU] = downloadUrl(identifier, it.name) }
         cbz?.let { picked[Formats.MIME_CBZ] = downloadUrl(identifier, it.name) }
-        cbr?.let { picked[Formats.MIME_CBZ] = downloadUrl(identifier, it.name) }
         rtf?.let { picked[Formats.MIME_RTF] = downloadUrl(identifier, it.name) }
         docx?.let { picked[Formats.MIME_DOCX] = downloadUrl(identifier, it.name) }
         md?.let { picked[Formats.MIME_MARKDOWN] = downloadUrl(identifier, it.name) }

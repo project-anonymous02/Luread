@@ -53,6 +53,7 @@ data class UserSettings(
     val fontSizeSp: Float = 18f,
     val lineHeightMul: Float = 1.4f,
     val pageAnimation: Boolean = true,
+    val pageAnimationStyle: String = "slide",
     val dimOverlay: Float = 0f,
     val keepScreenOn: Boolean = true,
     val trackReadingStats: Boolean = true,
@@ -60,12 +61,12 @@ data class UserSettings(
     val justifyText: Boolean = false,
     val brightnessOverride: Float = -1f,
     val volumeKeyNavigation: Boolean = false,
-    val tapLeftForNext: Boolean = true,
+    val tapLeftForNext: Boolean = false,
     val showPageNumbers: Boolean = true,
-    val autoScrollManga: Boolean = false,
-    val autoScrollSpeed: Float = 1f,
-    val mangaReadingDirection: String = "ltr",
-    val defaultReadingMode: String = "scroll",
+    // LUREAD-FEAT: arah baca per mode — umum (Teks/EPUB/PDF), Manga, Komik.
+    val readingDirection: String = "ltr",
+    val mangaReadingDirection: String = "rtl",
+    val komikReadingDirection: String = "ltr",
     // ---- Perpustakaan ----
     val defaultSort: String = "recent",
     val showFinishedBooks: Boolean = true,
@@ -90,7 +91,6 @@ data class UserSettings(
     val clampedGridColumns: Int get() = gridColumns.coerceIn(1, 6)
     val clampedCoverRatio: Float get() = coverAspectRatio.coerceIn(0.4f, 1.5f)
     val clampedBrightness: Float get() = brightnessOverride.coerceIn(-1f, 1f)
-    val clampedAutoScrollSpeed: Float get() = autoScrollSpeed.coerceIn(0.1f, 5f)
     val clampedCacheSize: Int get() = cacheSizeMb.coerceIn(64, 2048)
     val clampedTimeout: Int get() = timeoutSeconds.coerceIn(10, 120)
     val clampedTranslateChunk: Int get() = translateChunkSize.coerceIn(1000, 8000)
@@ -103,7 +103,13 @@ data class UserSettings(
             coverAspectRatio = clampedCoverRatio,
             gridColumns = clampedGridColumns,
             compactMetadata = compactMetadata,
+            highContrast = highContrast,
+            largerTouchTargets = largerTouchTargets,
+            boldText = boldText,
         )
+
+    /** Arah baca umum: `ltr` (Kiri→Kanan, default) atau `rtl` (Kanan→Kiri). */
+    val isRtlReading: Boolean get() = readingDirection == "rtl"
 }
 
 class SettingsRepository(private val dataStore: DataStore<Preferences>) {
@@ -128,6 +134,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val fontSize = floatPreferencesKey("font_size_sp")
         val lineHeight = floatPreferencesKey("line_height_mul")
         val pageAnimation = booleanPreferencesKey("page_animation")
+        val pageAnimationStyle = stringPreferencesKey("page_animation_style")
         val dimOverlay = floatPreferencesKey("dim_overlay")
         val keepScreenOn = booleanPreferencesKey("keep_screen_on")
         val trackReadingStats = booleanPreferencesKey("track_reading_stats")
@@ -137,10 +144,9 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val volumeKeyNavigation = booleanPreferencesKey("volume_key_navigation")
         val tapLeftForNext = booleanPreferencesKey("tap_left_for_next")
         val showPageNumbers = booleanPreferencesKey("show_page_numbers")
-        val autoScrollManga = booleanPreferencesKey("auto_scroll_manga")
-        val autoScrollSpeed = floatPreferencesKey("auto_scroll_speed")
+        val readingDirection = stringPreferencesKey("reading_direction")
         val mangaReadingDirection = stringPreferencesKey("manga_reading_direction")
-        val defaultReadingMode = stringPreferencesKey("default_reading_mode")
+        val komikReadingDirection = stringPreferencesKey("komik_reading_direction")
         // Perpustakaan
         val defaultSort = stringPreferencesKey("default_sort")
         val showFinishedBooks = booleanPreferencesKey("show_finished_books")
@@ -186,6 +192,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             fontSizeSp = prefs[Keys.fontSize] ?: 18f,
             lineHeightMul = prefs[Keys.lineHeight] ?: 1.4f,
             pageAnimation = prefs[Keys.pageAnimation] ?: true,
+            pageAnimationStyle = prefs[Keys.pageAnimationStyle] ?: "slide",
             dimOverlay = prefs[Keys.dimOverlay] ?: 0f,
             keepScreenOn = prefs[Keys.keepScreenOn] ?: true,
             trackReadingStats = prefs[Keys.trackReadingStats] ?: true,
@@ -193,12 +200,11 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             justifyText = prefs[Keys.justifyText] ?: false,
             brightnessOverride = prefs[Keys.brightnessOverride] ?: -1f,
             volumeKeyNavigation = prefs[Keys.volumeKeyNavigation] ?: false,
-            tapLeftForNext = prefs[Keys.tapLeftForNext] ?: true,
+            tapLeftForNext = prefs[Keys.tapLeftForNext] ?: false,
             showPageNumbers = prefs[Keys.showPageNumbers] ?: true,
-            autoScrollManga = prefs[Keys.autoScrollManga] ?: false,
-            autoScrollSpeed = prefs[Keys.autoScrollSpeed] ?: 1f,
-            mangaReadingDirection = prefs[Keys.mangaReadingDirection] ?: "ltr",
-            defaultReadingMode = prefs[Keys.defaultReadingMode] ?: "scroll",
+            readingDirection = prefs[Keys.readingDirection] ?: "ltr",
+            mangaReadingDirection = prefs[Keys.mangaReadingDirection] ?: "rtl",
+            komikReadingDirection = prefs[Keys.komikReadingDirection] ?: "ltr",
             // Perpustakaan
             defaultSort = prefs[Keys.defaultSort] ?: "recent",
             showFinishedBooks = prefs[Keys.showFinishedBooks] ?: true,
@@ -245,6 +251,12 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setFontSize(sp: Float) = edit { it[Keys.fontSize] = sp.coerceIn(10f, 40f) }
     suspend fun setLineHeight(mul: Float) = edit { it[Keys.lineHeight] = mul.coerceIn(1.0f, 2.5f) }
     suspend fun setPageAnimation(enabled: Boolean) = edit { it[Keys.pageAnimation] = enabled }
+    suspend fun setPageAnimationStyle(style: String) = edit {
+        it[Keys.pageAnimationStyle] = when (style) {
+            "fade", "none" -> style
+            else -> "slide"
+        }
+    }
     suspend fun setDimOverlay(value: Float) = edit { it[Keys.dimOverlay] = value.coerceIn(0f, 0.8f) }
     suspend fun setKeepScreenOn(enabled: Boolean) = edit { it[Keys.keepScreenOn] = enabled }
     suspend fun setTrackReadingStats(enabled: Boolean) = edit { it[Keys.trackReadingStats] = enabled }
@@ -254,10 +266,15 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setVolumeKeyNavigation(enabled: Boolean) = edit { it[Keys.volumeKeyNavigation] = enabled }
     suspend fun setTapLeftForNext(enabled: Boolean) = edit { it[Keys.tapLeftForNext] = enabled }
     suspend fun setShowPageNumbers(enabled: Boolean) = edit { it[Keys.showPageNumbers] = enabled }
-    suspend fun setAutoScrollManga(enabled: Boolean) = edit { it[Keys.autoScrollManga] = enabled }
-    suspend fun setAutoScrollSpeed(speed: Float) = edit { it[Keys.autoScrollSpeed] = speed.coerceIn(0.1f, 5f) }
-    suspend fun setMangaReadingDirection(dir: String) = edit { it[Keys.mangaReadingDirection] = dir.take(8) }
-    suspend fun setDefaultReadingMode(mode: String) = edit { it[Keys.defaultReadingMode] = mode.take(16) }
+    suspend fun setReadingDirection(dir: String) = edit {
+        it[Keys.readingDirection] = if (dir == "rtl") "rtl" else "ltr"
+    }
+    suspend fun setMangaReadingDirection(dir: String) = edit {
+        it[Keys.mangaReadingDirection] = if (dir == "ltr") "ltr" else "rtl"
+    }
+    suspend fun setKomikReadingDirection(dir: String) = edit {
+        it[Keys.komikReadingDirection] = if (dir == "rtl") "rtl" else "ltr"
+    }
 
     // ---- Perpustakaan ----
     suspend fun setDefaultSort(sort: String) = edit { it[Keys.defaultSort] = sort.take(20) }

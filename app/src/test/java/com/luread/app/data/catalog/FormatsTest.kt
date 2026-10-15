@@ -113,7 +113,8 @@ class FormatsTest {
 
         assertEquals(Formats.EPUB_OR_ZIP, Formats.sniff(zip))
         assertEquals(Formats.MIME_PDF, Formats.sniff(pdf))
-        assertNull(Formats.sniff(html))
+        // LUREAD-FEAT: HTML kini dikenali dari tag awal (bukan lagi null).
+        assertEquals(Formats.MIME_HTML, Formats.sniff(html))
         assertNull(Formats.sniff(ByteArray(0)))
     }
 

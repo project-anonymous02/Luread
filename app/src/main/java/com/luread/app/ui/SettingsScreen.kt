@@ -203,6 +203,37 @@ fun SettingsScreen(onOpenTranslator: () -> Unit) {
             checked = state.pageAnimation,
             onCheckedChange = vm::setPageAnimation,
         )
+        if (state.pageAnimation) {
+            Text(
+                text = stringResource(R.string.settings_page_animation_style, state.pageAnimationStyle),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            ChipRow(
+                options = listOf(
+                    "slide" to "Slide",
+                    "fade" to "Fade",
+                    "none" to "None",
+                ),
+                selected = state.pageAnimationStyle,
+                onSelect = vm::setPageAnimationStyle,
+            )
+        }
+        // LUREAD-FEAT: arah baca umum — semua halaman digeser kiri/kanan;
+        // tidak ada lagi mode scroll/webtoon (dilarang vertikal).
+        Text(
+            text = stringResource(R.string.settings_reading_direction, state.readingDirection),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        ChipRow(
+            options = listOf(
+                "ltr" to "Kiri → Kanan",
+                "rtl" to "Kanan → Kiri",
+            ),
+            selected = state.readingDirection,
+            onSelect = vm::setReadingDirection,
+        )
         ToggleRow(
             title = stringResource(R.string.settings_keep_screen_on),
             checked = state.keepScreenOn,
@@ -256,44 +287,30 @@ fun SettingsScreen(onOpenTranslator: () -> Unit) {
             onCheckedChange = vm::setShowPageNumbers,
         )
         Text(
-            text = stringResource(R.string.settings_reading_mode, state.defaultReadingMode),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        ChipRow(
-            options = listOf(
-                "scroll" to "Scroll",
-                "paged" to "Paged",
-                "webtoon" to "Webtoon",
-            ),
-            selected = state.defaultReadingMode,
-            onSelect = vm::setDefaultReadingMode,
-        )
-        // Manga reading
-        Text(
             text = stringResource(R.string.settings_manga_direction, state.mangaReadingDirection),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         ChipRow(
             options = listOf(
-                "ltr" to "Left to Right",
-                "rtl" to "Right to Left (Manga)",
+                "rtl" to "Kanan → Kiri (manga)",
+                "ltr" to "Kiri → Kanan",
             ),
             selected = state.mangaReadingDirection,
             onSelect = vm::setMangaReadingDirection,
         )
-        ToggleRow(
-            title = stringResource(R.string.settings_auto_scroll_manga),
-            checked = state.autoScrollManga,
-            onCheckedChange = vm::setAutoScrollManga,
+        Text(
+            text = stringResource(R.string.settings_komik_direction, state.komikReadingDirection),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        LabeledSlider(
-            label = stringResource(R.string.settings_auto_scroll_speed, "%.1f".format(state.clampedAutoScrollSpeed)),
-            value = state.autoScrollSpeed,
-            onValueChange = vm::setAutoScrollSpeed,
-            valueRange = 0.1f..5f,
-            steps = 48,
+        ChipRow(
+            options = listOf(
+                "ltr" to "Kiri → Kanan",
+                "rtl" to "Kanan → Kiri",
+            ),
+            selected = state.komikReadingDirection,
+            onSelect = vm::setKomikReadingDirection,
         )
         Text(
             text = stringResource(R.string.settings_manga_quality, state.mangaImageQuality),

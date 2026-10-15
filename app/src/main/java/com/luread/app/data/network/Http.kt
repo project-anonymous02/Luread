@@ -4,6 +4,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.timeout
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
@@ -12,6 +13,26 @@ data class HttpConfig(
     val requestTimeoutMs: Long = 30_000L,
     val connectTimeoutMs: Long = 15_000L,
 )
+
+/**
+ * LUREAD-FEAT: timeout dari Settings (disetel realtime oleh AppContainer).
+ *
+ * Ktor 3 tidak mengekspos config plugin HttpTimeout yang sudah terpasang,
+ * jadi nilai global ini dipakai lewat `timeout { … }` per-request di titik
+ * pusat fetch (fetchJson, Gutendex, MangaDex, terjemahan).
+ */
+object NetworkTimeout {
+    @Volatile
+    var requestTimeoutMs: Long = 30_000L
+
+    /** Terapkan nilai global pada builder request (dipanggil per request). */
+    fun applyTo(builder: io.ktor.client.request.HttpRequestBuilder) {
+        builder.timeout {
+            requestTimeoutMillis = requestTimeoutMs
+            socketTimeoutMillis = requestTimeoutMs
+        }
+    }
+}
 
 /**
  * Membangun HttpClient Ktor dengan engine OkHttp.

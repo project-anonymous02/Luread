@@ -57,6 +57,7 @@ fun BookDetailScreen(
     val ui by vm.ui.collectAsStateWithLifecycle()
     val loading by vm.isLoading.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
+    val downloadError by vm.downloadError.collectAsStateWithLifecycle()
 
     Column(modifier = Modifier.fillMaxSize()) {
         LureadTopBar(
@@ -86,6 +87,7 @@ fun BookDetailScreen(
             )
             else -> DetailContent(
                 state = current,
+                downloadError = downloadError,
                 onRead = { onRead(bookId) },
                 onDownload = vm::download,
                 onCancelDownload = vm::cancelDownload,
@@ -101,6 +103,7 @@ fun BookDetailScreen(
 @Composable
 private fun DetailContent(
     state: BookDetailUi,
+    downloadError: String?,
     onRead: () -> Unit,
     onDownload: () -> Unit,
     onCancelDownload: () -> Unit,
@@ -150,6 +153,7 @@ private fun DetailContent(
         item {
             Actions(
                 state = state,
+                downloadError = downloadError,
                 onRead = onRead,
                 onDownload = onDownload,
                 onCancelDownload = onCancelDownload,
@@ -243,6 +247,7 @@ private fun DetailContent(
 @Composable
 private fun Actions(
     state: BookDetailUi,
+    downloadError: String?,
     onRead: () -> Unit,
     onDownload: () -> Unit,
     onCancelDownload: () -> Unit,
@@ -279,16 +284,25 @@ private fun Actions(
                 )
             }
 
+            state.downloadState == BookEntity.DownloadState.FAILED -> {
+                // LUREAD-FIX: tombol Retry muncul dulu, lalu pesan galat
+                // (mis. "HTTP 503") supaya kegagalan tidak terlihat senyap.
+                PrimaryActionButton(
+                    label = stringResource(R.string.action_retry),
+                    onClick = onDownload,
+                )
+                downloadError?.let {
+                    Text(
+                        text = stringResource(R.string.detail_download_failed, it),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+
             state.canDownload -> {
                 PrimaryActionButton(
                     label = stringResource(R.string.action_download),
-                    onClick = onDownload,
-                )
-            }
-
-            state.downloadState == BookEntity.DownloadState.FAILED -> {
-                PrimaryActionButton(
-                    label = stringResource(R.string.action_retry),
                     onClick = onDownload,
                 )
             }

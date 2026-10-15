@@ -145,15 +145,21 @@ class HomeViewModel(
             }
         }
         viewModelScope.launch {
-            // Komik: Internet Archive cari comic/manga/graphic novel.
-            when (
-                val result = catalog.firstPage(
-                    CatalogQuery(search = "comic"),
-                    source = com.luread.app.data.catalog.BookSource.INTERNET_ARCHIVE,
-                )
-            ) {
-                is ApiResult.Success -> _comics.value = CatalogUiState.Content(result.value)
-                is ApiResult.Failure -> _comics.value = CatalogUiState.Error(result.error.toUserMessage())
+            // LUREAD-FEAT: Komik Indonesia — Internet Archive subject:"komik indonesia"
+            // + language:ind (diverifikasi 200 + hasil di docs/api-audit-v2.md).
+            _comics.value = CatalogUiState.Loading
+            val indonesian = catalog.firstPage(
+                CatalogQuery(topic = "komik indonesia", languages = listOf("id")),
+                source = com.luread.app.data.catalog.BookSource.INTERNET_ARCHIVE,
+            )
+            when (indonesian) {
+                is ApiResult.Success ->
+                    if (indonesian.value.results.isNotEmpty()) {
+                        _comics.value = CatalogUiState.Content(indonesian.value)
+                    } else {
+                        _comics.value = CatalogUiState.Error("Komik Indonesia tidak ditemukan")
+                    }
+                is ApiResult.Failure -> _comics.value = CatalogUiState.Error(indonesian.error.toUserMessage())
             }
         }
     }

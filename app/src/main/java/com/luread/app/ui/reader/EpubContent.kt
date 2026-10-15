@@ -6,6 +6,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -14,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import com.luread.app.R
 import com.luread.app.core.design.StateMessage
+import kotlinx.coroutines.launch
 import org.readium.navigator.common.Selection
 import org.readium.navigator.web.reflowable.ReflowableWebRendition
 import org.readium.navigator.web.reflowable.ReflowableWebRenditionState
@@ -33,8 +35,10 @@ fun EpubContent(
     state: ReflowableWebRenditionState,
     viewModel: ReaderViewModel,
     modifier: Modifier = Modifier,
+    nav: ReaderNav? = null,
 ) {
     val controller = state.controller
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     LaunchedEffect(controller) {
         if (controller == null) return@LaunchedEffect
@@ -46,6 +50,20 @@ fun EpubContent(
                     text = location.position.value.toString(),
                 )
             }
+    }
+
+    // LUREAD-FEAT: tap zone / volume key memakai navigasi halaman Readium
+    // (moveForward/moveBackward -> geser kiri/kanan pada mode paged).
+    DisposableEffect(nav, controller) {
+        nav?.register { delta ->
+            val target = controller
+            if (target != null) {
+                scope.launch {
+                    if (delta > 0) target.moveForward() else target.moveBackward()
+                }
+            }
+        }
+        onDispose { nav?.register(null) }
     }
 
     Box(modifier = modifier.fillMaxSize()) {

@@ -71,6 +71,14 @@ class ReaderViewModel(
     private val _epub = MutableStateFlow<EpubUi>(EpubUi.Loading)
     val epub: StateFlow<EpubUi> = _epub.asStateFlow()
 
+    /**
+     * Teks sumber mode TEXT (digabung dari hasil baca [TxtDocument]).
+     * LUREAD-FIX: pembaca memaginasi teks ini sesuai layar (lihat
+     * [TextPager]) sehingga tidak ada gulir vertikal.
+     */
+    private val _text = MutableStateFlow("")
+    val text: StateFlow<String> = _text.asStateFlow()
+
     private val _pages = MutableStateFlow<List<String>>(emptyList())
     val pages: StateFlow<List<String>> = _pages.asStateFlow()
 
@@ -139,6 +147,16 @@ class ReaderViewModel(
         viewModelScope.launch {
             progressEvents.debounce(1_200).collect { (progress, location) ->
                 container.library.saveProgress(bookId, progress, location)
+            }
+        }
+
+        // LUREAD-FEAT: pengaturan huruf/arah baca langsung diterapkan ke
+        // EPUB yang sedang terbuka tanpa membuka ulang buku.
+        viewModelScope.launch {
+            settings.collect { s ->
+                val ready = _epub.value as? EpubUi.Ready ?: return@collect
+                val controller = ready.state.controller ?: return@collect
+                controller.preferences = readerPreferences(s.clampedFontSize, s)
             }
         }
     }
@@ -265,6 +283,7 @@ class ReaderViewModel(
         val app: Application = container.appContext as Application
         val prefs = readerPreferences(
             fontSp = settings.value.clampedFontSize,
+            userSettings = settings.value,
         )
         withContext(Dispatchers.IO) {
             runCatching {
@@ -375,15 +394,43 @@ class ReaderViewModel(
     private val _cbzImages = MutableStateFlow<List<String>>(emptyList())
     val cbzImages: StateFlow<List<String>> = _cbzImages.asStateFlow()
 
-    private fun readerPreferences(fontSp: Float): ReflowableWebPreferences {
+    /**
+     * Preferensi EPUB.
+     *
+     * LUREAD-FIX: `scroll = false` mematikan gulir vertikal — Readium
+     * memakai paginasi sintetis (geser kiri/kanan) pada `scroll=false`.
+     * Arah baca mengikuti pengaturan: umumnya Kiri→Kanan (LTR), mode
+     * kanan-ke-kiri bila pengguna memilih RTL. Ukuran huruf, jarak baris,
+     * jenis huruf, dan perataan ikut pengaturan pembaca.
+     */
+    private fun readerPreferences(fontSp: Float, userSettings: UserSettings): ReflowableWebPreferences {
         // Latar belakang baca DIPAKSA putih (terang) — permintaan mutlak user.
         // `overridePublisherColors = true` memaksa warna teks/latar dari
         // preferensi ini mengalahkan gaya bawaan publisher (banyak EPUB
         // Gutenberg punya latar gelap).
         val base = ReflowableWebPreferences.LightTheme
+        val family = when (userSettings.fontFamily) {
+            "sans" -> org.readium.r2.navigator.preferences.FontFamily.SANS_SERIF
+            "monospace" -> org.readium.r2.navigator.preferences.FontFamily.MONOSPACE
+            "cursive" -> org.readium.r2.navigator.preferences.FontFamily.CURSIVE
+            "fantasy" -> org.readium.r2.navigator.preferences.FontFamily.FANTASY
+            else -> org.readium.r2.navigator.preferences.FontFamily.SERIF
+        }
         return base.copy(
-            scroll = true,
+            scroll = false,
+            readingProgression = if (userSettings.isRtlReading) {
+                org.readium.r2.navigator.preferences.ReadingProgression.RTL
+            } else {
+                org.readium.r2.navigator.preferences.ReadingProgression.LTR
+            },
             fontSize = (fontSp / 16.0).coerceIn(0.75, 2.5),
+            lineHeight = userSettings.clampedLineHeight.toDouble(),
+            fontFamily = family,
+            textAlign = if (userSettings.justifyText) {
+                org.readium.r2.navigator.preferences.TextAlign.JUSTIFY
+            } else {
+                org.readium.r2.navigator.preferences.TextAlign.START
+            },
             overridePublisherColors = true,
         )
     }
@@ -407,9 +454,12 @@ class ReaderViewModel(
             return
         }
         _pages.value = emptyList()
+        _text.value = ""
         withContext(Dispatchers.IO) {
-            runCatching { com.luread.app.core.util.TxtDocument.load(File(path)).pages }
-                .onSuccess { _pages.value = it }
+            runCatching {
+                com.luread.app.core.util.TxtDocument.load(File(path)).pages.joinToString("")
+            }
+                .onSuccess { _text.value = it }
                 .onFailure { error ->
                     if (error is CancellationException) throw error
                     _ui.value = ReaderUi.Failed(
@@ -417,6 +467,14 @@ class ReaderViewModel(
                     )
                 }
         }
+    }
+
+    /**
+     * Daftarkan halaman visual hasil paginasi layar (mode TEXT) sehingga
+     * fitur "terjemahkan halaman ini" membaca teks halaman yang benar.
+     */
+    fun onVisualPages(pages: List<String>) {
+        _pages.value = pages
     }
 
     // ------------------------------------------------------------------

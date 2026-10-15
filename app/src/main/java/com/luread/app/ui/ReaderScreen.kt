@@ -3,11 +3,13 @@ package com.luread.app.ui
 import android.app.Activity
 import android.view.WindowManager
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -57,10 +59,13 @@ import com.luread.app.ui.reader.EpubError
 import com.luread.app.ui.reader.EpubUi
 import com.luread.app.ui.reader.HtmlReader
 import com.luread.app.ui.reader.PdfReader
+import com.luread.app.ui.reader.ReaderInputBus
+import com.luread.app.ui.reader.ReaderNav
 import com.luread.app.ui.reader.ReaderUi
 import com.luread.app.ui.reader.ReaderViewModel
 import com.luread.app.ui.reader.SavedLocation
 import com.luread.app.ui.reader.TextPager
+import com.luread.app.ui.reader.readerFontFamily
 import com.luread.app.ui.reader.selectedEpubText
 import kotlinx.coroutines.launch
 import org.readium.r2.shared.ExperimentalReadiumApi
@@ -83,7 +88,7 @@ fun ReaderScreen(
     val vm = appViewModel { ReaderViewModel(bookId, it) }
     val ui by vm.ui.collectAsStateWithLifecycle()
     val epub by vm.epub.collectAsStateWithLifecycle()
-    val pages by vm.pages.collectAsStateWithLifecycle()
+    val sourceText by vm.text.collectAsStateWithLifecycle()
     val settings by vm.settings.collectAsStateWithLifecycle()
     val progress by vm.progress.collectAsStateWithLifecycle()
     val annotations by vm.annotationList.collectAsStateWithLifecycle()
@@ -95,6 +100,9 @@ fun ReaderScreen(
     val scope = rememberCoroutineScope()
     var showAnnotations by rememberSaveable { mutableStateOf(false) }
     var showTranslateSheet by rememberSaveable { mutableStateOf(false) }
+
+    // LUREAD-FEAT: satu bus navigasi dipakai tap zone dan tombol volume.
+    val readerNav = remember { ReaderNav() }
 
     DisposableEffect(Unit) {
         onDispose { vm.onLeave() }
@@ -108,6 +116,36 @@ fun ReaderScreen(
             window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
         onDispose { window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
+    }
+
+    // LUREAD-FEAT: kecerahan manual per sesi baca (nilai -1 = ikut sistem).
+    DisposableEffect(settings.clampedBrightness, context) {
+        val window = (context as? Activity)?.window
+        val original = window?.attributes?.screenBrightness ?: -1f
+        if (window != null) {
+            val attrs = window.attributes
+            attrs.screenBrightness = if (settings.clampedBrightness < 0f) {
+                -1f
+            } else {
+                settings.clampedBrightness.coerceIn(0.01f, 1f)
+            }
+            window.attributes = attrs
+        }
+        onDispose {
+            if (window != null) {
+                val attrs = window.attributes
+                attrs.screenBrightness = original
+                window.attributes = attrs
+            }
+        }
+    }
+
+    // LUREAD-FEAT: volume key navigasi halaman (bila diaktifkan di Settings).
+    DisposableEffect(settings.volumeKeyNavigation) {
+        if (settings.volumeKeyNavigation) {
+            ReaderInputBus.handler = { delta -> readerNav.move(delta) }
+        }
+        onDispose { ReaderInputBus.clear() }
     }
 
     LaunchedEffect(message) {
@@ -137,39 +175,69 @@ fun ReaderScreen(
             val book = state.book
             val epubReady = epub as? EpubUi.Ready
 
+            // Arah baca per mode: komik (CBZ) punya arah sendiri,
+            // mode lain mengikuti arah baca umum (default Kiri→Kanan).
+            val isRtl = when (state.mode) {
+                ReaderViewModel.Mode.CBZ -> settings.komikReadingDirection == "rtl"
+                ReaderViewModel.Mode.HTML -> false
+                else -> settings.readingDirection == "rtl"
+            }
+
             Box(modifier = Modifier.fillMaxSize()) {
                 when (state.mode) {
                     ReaderViewModel.Mode.EPUB -> when (val epubState = epub) {
                         is EpubUi.Loading -> LoadingState(modifier = Modifier.align(Alignment.Center))
                         is EpubUi.Failed -> EpubError(message = epubState.message)
-                        is EpubUi.Ready -> EpubContent(state = epubState.state, viewModel = vm)
+                        is EpubUi.Ready -> EpubContent(
+                            state = epubState.state,
+                            viewModel = vm,
+                            nav = readerNav,
+                        )
                     }
 
                     ReaderViewModel.Mode.PDF -> PdfReader(
                         path = book.localPath.orEmpty(),
                         startPage = vm.savedPage(),
                         onPage = vm::onProgressPage,
+                        rtl = isRtl,
+                        animatePages = settings.pageAnimation,
+                        showPageNumbers = settings.showPageNumbers,
+                        nav = readerNav,
                     )
 
                     ReaderViewModel.Mode.TEXT -> TextPager(
-                        pages = pages,
+                        text = sourceText,
                         startPage = vm.savedPage(),
                         fontSp = settings.clampedFontSize,
                         onPage = vm::onProgressPage,
                         lineHeightMul = settings.clampedLineHeight,
                         animatePages = settings.pageAnimation,
+                        animationStyle = settings.pageAnimationStyle,
+                        rtl = isRtl,
+                        fontFamily = readerFontFamily(settings.fontFamily),
+                        justify = settings.justifyText,
+                        showPageNumbers = settings.showPageNumbers,
+                        nav = readerNav,
+                        onPagesReady = vm::onVisualPages,
                     )
 
                     ReaderViewModel.Mode.CBZ -> com.luread.app.ui.reader.CbzReader(
                         imagePaths = cbzImages,
                         startPage = vm.savedPage(),
                         onPage = vm::onProgressPage,
+                        rtl = isRtl,
+                        animatePages = settings.pageAnimation,
+                        showPageNumbers = settings.showPageNumbers,
+                        nav = readerNav,
                     )
 
                     ReaderViewModel.Mode.HTML -> HtmlReader(
                         path = book.localPath.orEmpty(),
                         fontSp = settings.clampedFontSize,
                         onProgress = { value -> vm.onProgress(value, null) },
+                        justify = settings.justifyText,
+                        fontFamily = settings.fontFamily,
+                        nav = readerNav,
                     )
                 }
 
@@ -178,6 +246,32 @@ fun ReaderScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(Color.Black.copy(alpha = settings.clampedDim)),
+                    )
+                }
+
+                // LUREAD-FEAT: tap zone kiri/kanan untuk maju-mundur halaman.
+                // Sisi "berikutnya" mengikuti arah baca dan preferensi
+                // `tapLeftForNext`; zona tengah dibiarkan bebas agar tombol
+                // top bar tetap bisa diklik.
+                val naturalLeftIsNext = isRtl
+                val leftIsNext = settings.tapLeftForNext != naturalLeftIsNext
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .align(Alignment.TopStart),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clickable { readerNav.move(if (leftIsNext) 1 else -1) },
+                    )
+                    Spacer(modifier = Modifier.weight(1f).fillMaxHeight())
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clickable { readerNav.move(if (leftIsNext) -1 else 1) },
                     )
                 }
 

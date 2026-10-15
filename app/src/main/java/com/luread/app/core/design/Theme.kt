@@ -2,6 +2,7 @@ package com.luread.app.core.design
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
@@ -218,6 +219,9 @@ data class LureadExtras(
     val coverAspectRatio: Float = 0.68f,
     val gridColumns: Int = 3,
     val compactMetadata: Boolean = false,
+    val highContrast: Boolean = false,
+    val largerTouchTargets: Boolean = false,
+    val boldText: Boolean = false,
 )
 
 val LocalLureadExtras = staticCompositionLocalOf { LureadExtras() }
@@ -257,12 +261,74 @@ fun LureadTheme(
         extraLarge = androidx.compose.foundation.shape.RoundedCornerShape(extras.radius.dp * 2f),
     )
 
-    CompositionLocalProvider(LocalLureadExtras provides extras) {
+    // LUREAD-FEAT: high contrast mempertegas teks & garis; bold text
+    // memberatkan seluruh tipografi; larger touch targets membesarkan
+    // target sentuh minimal (IconButton/Switch) lewat CompositionLocal.
+    val finalScheme = if (extras.highContrast) {
+        colorScheme.copy(
+            onBackground = if (dark) Color.White else Color.Black,
+            onSurface = if (dark) Color.White else Color.Black,
+            onSurfaceVariant = if (dark) Color(0xFFE8E8E8) else Color(0xFF2A2A2A),
+            outline = if (dark) Color(0xFF8A8A8A) else Color(0xFF4A4A4A),
+            outlineVariant = if (dark) Color(0xFF8A8A8A) else Color(0xFF4A4A4A),
+        )
+    } else {
+        colorScheme
+    }
+    val finalTypography = if (extras.boldText) {
+        val boldMap = LureadTypography.styles().mapValues { (_, style) ->
+            style.copy(fontWeight = FontWeight.Bold)
+        }
+        Typography(
+            displayLarge = boldMap.getValue("displayLarge"),
+            displayMedium = boldMap.getValue("displayMedium"),
+            displaySmall = boldMap.getValue("displaySmall"),
+            headlineLarge = boldMap.getValue("headlineLarge"),
+            headlineMedium = boldMap.getValue("headlineMedium"),
+            headlineSmall = boldMap.getValue("headlineSmall"),
+            titleLarge = boldMap.getValue("titleLarge"),
+            titleMedium = boldMap.getValue("titleMedium"),
+            titleSmall = boldMap.getValue("titleSmall"),
+            bodyLarge = boldMap.getValue("bodyLarge"),
+            bodyMedium = boldMap.getValue("bodyMedium"),
+            bodySmall = boldMap.getValue("bodySmall"),
+            labelLarge = boldMap.getValue("labelLarge"),
+            labelMedium = boldMap.getValue("labelMedium"),
+            labelSmall = boldMap.getValue("labelSmall"),
+        )
+    } else {
+        LureadTypography
+    }
+    val touchMin = if (extras.largerTouchTargets) 56.dp else 48.dp
+
+    CompositionLocalProvider(
+        LocalLureadExtras provides extras,
+        LocalMinimumInteractiveComponentSize provides touchMin,
+    ) {
         MaterialTheme(
-            colorScheme = colorScheme,
-            typography = LureadTypography,
+            colorScheme = finalScheme,
+            typography = finalTypography,
             shapes = shapes,
             content = content,
         )
     }
 }
+
+/** Akses style individual [Typography] untuk pemetaan bold text. */
+private fun Typography.styles(): Map<String, TextStyle> = mapOf(
+    "displayLarge" to displayLarge,
+    "displayMedium" to displayMedium,
+    "displaySmall" to displaySmall,
+    "headlineLarge" to headlineLarge,
+    "headlineMedium" to headlineMedium,
+    "headlineSmall" to headlineSmall,
+    "titleLarge" to titleLarge,
+    "titleMedium" to titleMedium,
+    "titleSmall" to titleSmall,
+    "bodyLarge" to bodyLarge,
+    "bodyMedium" to bodyMedium,
+    "bodySmall" to bodySmall,
+    "labelLarge" to labelLarge,
+    "labelMedium" to labelMedium,
+    "labelSmall" to labelSmall,
+)

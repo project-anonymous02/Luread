@@ -60,6 +60,11 @@ data class MangaDexManga(
 
     val originalLanguage: String?
         get() = attributes?.originalLanguage
+
+    // LUREAD-FEAT: Manga yang hanya ada di situs eksternal (Manhwa/dll) —
+    // field resmi API, dipakai sebagai fallback saat feed chapter kosong.
+    val externalUrl: String?
+        get() = attributes?.externalUrl?.trim()?.takeIf { it.isNotEmpty() }
 }
 
 @Serializable
@@ -69,6 +74,7 @@ data class MangaDexMangaAttributes(
     val status: String? = null,
     val year: Int? = null,
     @SerialName("originalLanguage") val originalLanguage: String? = null,
+    @SerialName("externalUrl") val externalUrl: String? = null,
     val tags: List<MangaDexTag> = emptyList(),
 )
 

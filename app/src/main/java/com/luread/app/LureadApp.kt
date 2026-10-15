@@ -19,6 +19,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import com.luread.app.data.network.NetworkTimeout
 
 /**
  * Wadah dependensi (service locator) untuk seluruh aplikasi.
@@ -45,7 +47,8 @@ class AppContainer(context: Context) {
 
     val translator by lazy { com.luread.app.data.translate.TranslationService(httpClient) }
 
-    val manga by lazy { MangaRepository(MangaDexApi(httpClient)) }
+    // LUREAD-FEAT: sumber kedua Komiku (scraping) menyusul MangaDex.
+    val manga by lazy { MangaRepository(MangaDexApi(httpClient), com.luread.app.data.komiku.KomikuApi(httpClient)) }
 
     val database by lazy { LureadDatabase.get(appContext) }
 
@@ -66,6 +69,18 @@ class AppContainer(context: Context) {
     }
 
     val settings by lazy { SettingsRepository(settingsDataStore(appContext)) }
+
+    init {
+        // LUREAD-FEAT: Pengaturan → timeout HTTP (per-request) & unduhan, realtime.
+        appScope.launch {
+            settings.settings.collect { s ->
+                val timeoutMs = s.clampedTimeout * 1000L
+                NetworkTimeout.requestTimeoutMs = timeoutMs
+                downloads.connectTimeoutMs = (timeoutMs / 2).coerceIn(5_000L, 60_000L).toInt()
+                downloads.readTimeoutMs = timeoutMs.toInt()
+            }
+        }
+    }
 
     fun close() {
         downloads.cancelAll()

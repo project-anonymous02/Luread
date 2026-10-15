@@ -50,10 +50,11 @@ class SettingsViewModel(
     fun setVolumeKeyNavigation(enabled: Boolean) = launch { settings.setVolumeKeyNavigation(enabled) }
     fun setTapLeftForNext(enabled: Boolean) = launch { settings.setTapLeftForNext(enabled) }
     fun setShowPageNumbers(enabled: Boolean) = launch { settings.setShowPageNumbers(enabled) }
-    fun setAutoScrollManga(enabled: Boolean) = launch { settings.setAutoScrollManga(enabled) }
-    fun setAutoScrollSpeed(speed: Float) = launch { settings.setAutoScrollSpeed(speed) }
+    // LUREAD-FEAT: pengaturan baru — gaya animasi halaman & arah baca per mode.
+    fun setPageAnimationStyle(style: String) = launch { settings.setPageAnimationStyle(style) }
+    fun setReadingDirection(dir: String) = launch { settings.setReadingDirection(dir) }
     fun setMangaReadingDirection(dir: String) = launch { settings.setMangaReadingDirection(dir) }
-    fun setDefaultReadingMode(mode: String) = launch { settings.setDefaultReadingMode(mode) }
+    fun setKomikReadingDirection(dir: String) = launch { settings.setKomikReadingDirection(dir) }
 
     // ---- Perpustakaan ----
     fun setDefaultSort(sort: String) = launch { settings.setDefaultSort(sort) }

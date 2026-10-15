@@ -1,5 +1,6 @@
 package com.luread.app.ui.manga
 
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,12 +22,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -61,6 +64,8 @@ sealed interface MangaDetailUi {
         val status: String?,
         val description: String?,
         val chapters: List<MangaRepository.ChapterSummary>,
+        // LUREAD-FEAT: fallback ke situs asal bila tidak ada chapter di MangaDex.
+        val externalUrl: String? = null,
     ) : MangaDetailUi
 
     data class Error(val message: String) : MangaDetailUi
@@ -94,6 +99,7 @@ class MangaDetailViewModel(
                         status = meta.status,
                         description = meta.description,
                         chapters = chapters,
+                        externalUrl = meta.externalUrl,
                     )
                 }
             }
@@ -205,7 +211,34 @@ fun MangaDetailScreen(
                 }
                 if (state.chapters.isEmpty()) {
                     item {
-                        StateMessage(title = stringResource(R.string.state_empty_title))
+                        // LUREAD-FEAT: manga tanpa chapter di MangaDex (mis. hanya
+                        // di situs eksternal) → tombol buka URL resmi dari API.
+                        val external = state.externalUrl
+                        if (external != null) {
+                            val context = LocalContext.current
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(Sm),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.manga_no_chapters),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                TextButton(onClick = {
+                                    runCatching {
+                                        context.startActivity(
+                                            Intent(Intent.ACTION_VIEW, android.net.Uri.parse(external)),
+                                        )
+                                    }
+                                }) {
+                                    Text(stringResource(R.string.manga_open_external))
+                                }
+                            }
+                        } else {
+                            StateMessage(title = stringResource(R.string.state_empty_title))
+                        }
                     }
                 } else {
                     items(state.chapters, key = { it.id }) { ch ->
@@ -233,13 +266,16 @@ fun MangaDetailScreen(
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onBackground,
                             )
-                            Text(
-                                text = listOfNotNull(
-                                    ch.pages?.let { "$it pp" },
-                                ).joinToString(" · "),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                            // LUREAD-FIX: jangan tampilkan "0 pp" — API MangaDex
+                            // mengirim pages=0 untuk chapter eksternal/tanpa data.
+                            val pageCount = ch.pages
+                            if (pageCount != null && pageCount > 0) {
+                                Text(
+                                    text = stringResource(R.string.manga_pages, pageCount),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
                         HorizontalDivider()
                     }

@@ -1,6 +1,7 @@
 package com.luread.app
 
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -22,6 +23,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -41,6 +44,7 @@ import com.luread.app.ui.LocalAppContainer
 import com.luread.app.ui.ReaderScreen
 import com.luread.app.ui.SettingsScreen
 import com.luread.app.ui.TranslatorScreen
+import com.luread.app.ui.reader.ReaderInputBus
 import com.luread.app.ui.manga.MangaDetailScreen
 import com.luread.app.ui.manga.MangaListScreen
 import com.luread.app.ui.manga.MangaReaderScreen
@@ -79,6 +83,13 @@ class MainActivity : ComponentActivity() {
 
         val container = (application as LureadApp).container
 
+        // LUREAD-FEAT: ikuti pengaturan navigasi volume key.
+        lifecycleScope.launch {
+            container.settings.settings.collect { settings ->
+                ReaderInputBus.enabled = settings.volumeKeyNavigation
+            }
+        }
+
         setContent {
             val settings by container.settings.settings
                 .collectAsStateWithLifecycle(initialValue = UserSettings())
@@ -98,6 +109,27 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * LUREAD-FEAT: tombol volume jadi maju/mundur halaman selama pembaca
+     * terbuka dan pengaturan `volumeKeyNavigation` aktif; tombol tetap
+     * berfungsi normal di layar lain.
+     */
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (ReaderInputBus.enabled && ReaderInputBus.handler != null) {
+            when (keyCode) {
+                KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                    ReaderInputBus.move(1)
+                    return true
+                }
+                KeyEvent.KEYCODE_VOLUME_UP -> {
+                    ReaderInputBus.move(-1)
+                    return true
+                }
+            }
+        }
+        return super.onKeyDown(keyCode, event)
     }
 }
 
